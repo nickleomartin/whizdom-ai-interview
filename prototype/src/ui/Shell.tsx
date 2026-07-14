@@ -5,6 +5,7 @@ import { rebuildSession } from '../sim/engine'
 import { PERSONAS } from '../personas/personas'
 import { ControlPanel } from './ControlPanel'
 import { PhoneFrame } from './PhoneFrame'
+import { Notifications } from './Notifications'
 
 export interface ShellSlots {
   main: ReactNode
@@ -84,6 +85,7 @@ export function Shell({ main, sidebar, slip, overlays }: ShellSlots) {
         {topbar}
         <div className="phone-viewport">
           <PhoneFrame>
+            <Notifications />
             <div className="phone-scroll">
               {phoneTab === 'home' && main}
               {phoneTab === 'live' && !dieterLiveHidden && sidebar}
@@ -114,6 +116,7 @@ export function Shell({ main, sidebar, slip, overlays }: ShellSlots) {
         <div className="col-side">{sidebar}</div>
         <div className="col-slip">{slip}</div>
       </div>
+      <Notifications />
       {overlays}
       <ControlPanel />
     </div>

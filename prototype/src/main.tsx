@@ -7,6 +7,7 @@ import './styles/app.css'
 import './styles/cards.css'
 import './styles/layout.css'
 import './styles/panels.css'
+import './styles/notifications.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

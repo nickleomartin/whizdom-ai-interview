@@ -1,0 +1,65 @@
+.toast-stack {
+  position: fixed;
+  top: 52px;
+  right: 12px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 290px;
+}
+.toast {
+  background: var(--surface);
+  color: var(--text);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  animation: toast-in 0.25s ease-out;
+}
+.toast.kind-goal { border-left-color: var(--live); }
+.toast.kind-boost { border-left-color: var(--promo); }
+.toast.kind-settled { border-left-color: var(--up); }
+.toast.kind-cashout { border-left-color: var(--accent-2); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* phone push banners — drop from notch, iOS-ish */
+.push-stack {
+  position: absolute;
+  top: 28px;
+  left: 10px;
+  right: 10px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.toast.push {
+  flex-wrap: wrap;
+  background: rgba(30, 32, 38, 0.92);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  animation: push-in 0.3s ease-out;
+}
+.push-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+@keyframes push-in {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: none; }
+}
