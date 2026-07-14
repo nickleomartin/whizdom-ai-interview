@@ -16,7 +16,7 @@ inside the model. Until this ADR, no decision record owned the stage itself.
 
 Ordering choices also determine what the system is exposed to next, which makes this stage the
 exposure-control half of feedback-loop management — the system-wide loop analysis lives in
-[ADR-0009](0009-feedback-loop-control.md); this ADR owns the composition mechanisms it relies on.
+[ADR-0009](0009-evaluation-and-feedback-loops.md); this ADR owns the composition mechanisms it relies on.
 
 ## Decision
 
@@ -66,7 +66,7 @@ popularity is not personalised escalation.
 - Trade-off tuning is an operations change (config), not an ML change (retraining) — and
   per-tenant tuning stays inside guardrails because configuration is versioned and reviewed.
 - Dithering slightly reduces short-term engagement versus pure exploitation — accepted as the
-  price of unbiased-enough logs and loop damping ([ADR-0009](0009-feedback-loop-control.md)); the effect is bounded by the
+  price of unbiased-enough logs and loop damping ([ADR-0009](0009-evaluation-and-feedback-loops.md)); the effect is bounded by the
   perturbation scale.
 - Six rules interacting is real complexity: the composition is implemented as an ordered,
   deterministic pass (utility sort → caps → own-mix adjustment → promo slotting → new-item
@@ -79,7 +79,7 @@ popularity is not personalised escalation.
   composed this way?") lose their inspectable answer. Explicit utility weights are the same
   mathematics with a paper trail.
 - **No ordering stage — serve by score.** Rejected: hands composition to whichever item type or
-  popular fixture inflates, and removes the structural home for every mitigation in [ADR-0009](0009-feedback-loop-control.md).
+  popular fixture inflates, and removes the structural home for every mitigation in [ADR-0009](0009-evaluation-and-feedback-loops.md).
 - **Per-placement bespoke rankers.** Rejected: three placements × the per-type calibration
   matrix would fragment training data and triple the model surface; placement-as-feature plus
   per-placement configuration achieves the differentiation at config cost.

@@ -219,7 +219,7 @@ Design must reflect these, not generic "RG filters":
   own-mix calibration → promo slotting → new-item floor → seeded dithering), all weights and
   caps as versioned tenant-tunable configuration. Per-placement behaviour is config, not code
 
-### [ADR-0009](adr/0009-feedback-loop-control.md): Feedback-Loop Control (added 2026-07-14)
+### [ADR-0009](adr/0009-evaluation-and-feedback-loops.md): Feedback-Loop Control (added 2026-07-14)
 - Question: Where do recommender feedback loops get owned — mechanisms, monitoring, exploration policy?
 - Decision: a system-property record mapping the four pathologies (popularity amplification,
   chasing losses, RG-tier exposure collapse, novelty starvation) to structural mitigations in
@@ -452,24 +452,10 @@ at v3, and a feature source only at v4 — stream infra investment is incrementa
 
 ---
 
-## 8. Evaluation Design Checklist
+## 8. Evaluation Design (decided 2026-07-14)
 
-### Offline evaluation
-- [ ] Metric choice: NDCG@K? MRR? Precision@K? — what K?
-- [ ] Holdout strategy: time-based split (not random — data leakage risk with temporal signals)
-- [ ] Counterfactual: IPS or DM estimator for logged bet data?
-- [ ] Cold-start coverage metric?
-- [ ] Catalog-coverage metric (§6b): share of live engagement on markets born after last itemset build —
-  the item-*existence* staleness measure, distinct from CTR-decay attribute staleness; the v2→v3 gate input
-
-### Online evaluation
-- [ ] Primary metric: bet conversion rate, session depth, or revenue-per-bet?
-- [ ] Guardrail metrics: deposit velocity, RG trigger rate, jurisdiction complaint rate
-- [ ] A/B split: user-level or session-level? (user-level avoids SUTVA violation)
-- [ ] Novelty vs. accuracy tension: do we measure beyond CTR?
-
-### Feedback-loop pathologies to monitor
-- [ ] Popularity bias amplification (top markets dominate → diversity collapse)
-- [ ] Chasing losses: user on losing streak → recommender surfaces high-odds bets → RG risk
-- [ ] RG trigger rate creep: model learns RG-limited users are low-value, stops recommending to them (exposure bias)
-- [ ] Novelty starvation: offline pool never refreshed → stale markets surface as recommendations
+Moved to [ADR-0009: Evaluation & Feedback-Loop Control](adr/0009-evaluation-and-feedback-loops.md)
+— offline metrics (NDCG@placement-K, recall@pool, the two staleness metrics), online experiment
+rules (user-level randomisation, whole-week durations, permanent holdout), the success
+definition beyond click-through, drift monitoring, and the four-pathology loop-control map with
+its guardrails.

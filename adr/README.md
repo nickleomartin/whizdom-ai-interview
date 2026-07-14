@@ -15,4 +15,4 @@ their owning records. Format: [template.md](template.md). Coined terms: [glossar
 | [0006](0006-multi-tenancy.md) | Multi-tenancy | One pooled model, siloed data, tenant-aware features; per-tenant evaluation slices | Cross-cutting |
 | [0007](0007-cost-model.md) | Cost model | Revenue-derived ceiling (~€19k/month) meets bottom-up unit costs (~€0.55/1k requests); CPU-only serving follows | Cross-cutting |
 | [0008](0008-ordering-stage.md) | Ordering stage | Six ordered composition rules over the gated set; per-placement behaviour is configuration, not code | Ordering stage |
-| [0009](0009-feedback-loop-control.md) | Feedback-loop control | Four named pathologies mapped to structural mitigations and guardrail signals; exploration deferred behind stated preconditions | Cross-cutting |
+| [0009](0009-evaluation-and-feedback-loops.md) | Evaluation & feedback-loop control | Offline/online evaluation methodology (metrics, holdouts, SNIPS, experiment rules) plus four named loop pathologies mapped to structural mitigations and guardrail signals | Cross-cutting |

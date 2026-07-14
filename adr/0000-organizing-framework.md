@@ -67,7 +67,7 @@ leftward in this table wherever freshness allows.
 
 Four records are deliberately **cross-cutting** — they constrain every cell rather than living
 in one: the feature contract ([ADR-0004](0004-feature-store-contract.md)), multi-tenancy ([ADR-0006](0006-multi-tenancy.md)), the cost model ([ADR-0007](0007-cost-model.md)),
-and feedback-loop control ([ADR-0009](0009-feedback-loop-control.md)).
+and evaluation & feedback-loop control ([ADR-0009](0009-evaluation-and-feedback-loops.md)).
 
 ### Translating between the two vocabularies
 
@@ -87,7 +87,7 @@ submission at all.
 | Offline/online composition | The tier-escalation contract and Stage × Version matrix ([ADR-0001](0001-offline-nearline-online-composition.md)) |
 | Modelling choices | The retrieval and scoring stages ([ADR-0002](0002-candidate-generation.md), [ADR-0003](0003-ranking-model.md)) plus the feature contract ([ADR-0004](0004-feature-store-contract.md)) |
 | Responsible Gambling & eligibility | The filtering stage at both its points ([ADR-0005](0005-rg-enforcement-point.md)), reinforced structurally in scoring ([ADR-0003](0003-ranking-model.md)) and ordering ([ADR-0008](0008-ordering-stage.md)) |
-| Evaluation & feedback loops | Cross-cutting: the evaluation harness (TASKS step 12) and the loop-control map ([ADR-0009](0009-feedback-loop-control.md)) |
+| Evaluation & feedback loops | Cross-cutting, one owning record: [ADR-0009](0009-evaluation-and-feedback-loops.md) — evaluation methodology plus the loop-control map and its guardrails |
 
 ## Consequences
 
@@ -112,7 +112,7 @@ submission at all.
   and no nearline tier, which this domain's economics specifically reward ([ADR-0001](0001-offline-nearline-online-composition.md)).
 - **An eight-stage decomposition (Fennel's blueprint).** Rejected: finer-grained than this
   design needs. Its real contribution — feedback loops as a first-class concern — is adopted
-  as [ADR-0009](0009-feedback-loop-control.md) instead.
+  as [ADR-0009](0009-evaluation-and-feedback-loops.md) instead.
 - **No explicit framework.** Rejected: the resulting confusion was observed in practice during
   review — the ordering ADR existed with no parent context, and assessment topics were blurring
   into design decomposition.
