@@ -3,8 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-07-14
 
-Terms used here (itemset, tier, compliance gate, validity KV, invalidation storm, experiment gate) are
-defined in the [glossary](../GLOSSARY.md).
+Terms used here (itemset, tier, compliance gate, validity KV, invalidation storm, fan-out,
+experiment gate) are defined in the [glossary](../GLOSSARY.md).
 
 ## Context
 
@@ -73,6 +73,16 @@ touching the feature contract's tier boundaries.
 suspensions and recreations on the same fixture). Workers debounce per fixture: the burst
 collapses into one recompute per affected user, not one per market event.
 
+**Where this departs from the Netflix blueprint — fan-out.** The blueprint this ADR adapts
+triggers nearline work on *per-user* events: a member watches a title, and that member's own
+recommendations are recomputed — a fan-out of one. Here the trigger is a *world* event: one goal
+invalidates the itemsets of every user holding that fixture's markets — a fan-out in the
+thousands. The machinery in this section that Netflix's nearline never needed — per-fixture
+debouncing, the affected-user index, the priority tiers below — exists to manage that fan-out.
+It also makes the targeting policy load-bearing rather than an optimisation: recomputing every
+affected user on every event approaches all-users × all-events on a busy Saturday (the rejected
+"streaming full recompute" alternative), and the tier's economics collapse.
+
 **Which users get recomputed — the targeting policy.** "Affected" is an index lookup, not a
 scan: itemsets are indexed by the fixtures and slots they contain. But on a busy Saturday the
 affected set for a big fixture can be a large share of all active users, so affected users are
@@ -89,14 +99,31 @@ If the budget saturates (many simultaneous fixtures), tier 2 degrades gracefully
 batch cadence while tier 1 holds — and the validity KV at the gate keeps every user safe from
 suspended markets in the meantime, whatever their recompute tier.
 
-**Why per-event beats per-request.** Live market state is user-independent: one goal invalidates
-the itemsets of every user holding that fixture's markets. Paying per-request (re-rank with live
-features at request time) means paying model inference repeatedly for the same underlying change
-during sidebar refresh storms. Paying per-event (recompute once, serve via cheap lookups) is
-roughly ten times cheaper for the same freshness on this signal layer. Only session intent —
-what this user did seconds ago — genuinely needs request-time inference, because it cannot be
-precomputed for anyone else. That is the entire case for nearline as its own roadmap version
-(v3) ahead of request-time re-ranking (v4).
+**Why per-event beats per-request — the arithmetic.** Live market state is user-independent: one
+goal invalidates the itemsets of every user holding that fixture's markets. The two ways to buy
+freshness on this layer compare as:
+
+```
+per-event:    market events × affected users recomputed × cost(one recompute)
+per-request:  reads served with fresh inference × cost(one inference pass)
+```
+
+The stage logic is the same in both paths, so a recompute and an inference pass cost about the
+same per user, and the ratio reduces to *reads per user between market events*. In-play, an open
+sidebar polls every few seconds, while a live fixture produces a material market event roughly
+once a minute — about ten reads per event window. The per-request path therefore pays roughly
+ten times more for the same freshness, recomputing an identical answer on every poll because
+nothing changed between them. Against the €0.55 per thousand requests ceiling
+([ADR-0007](0007-cost-model.md)), that multiple is binding, not stylistic.
+
+The comparison is at its worst exactly when it matters most, because reads and events peak
+together: the goal that invalidates the itemsets is also what triggers the refresh storm. The
+per-request path pays its peak inference bill at the moment of peak churn; the per-event path
+pays once per affected user and serves the storm from lookups.
+
+Only session intent — what this user did seconds ago — genuinely needs request-time inference,
+because it cannot be precomputed for anyone else. That is the entire case for nearline as its
+own roadmap version (v3) ahead of request-time re-ranking (v4).
 
 ## Consequences
 
@@ -126,7 +153,7 @@ precomputed for anyone else. That is the entire case for nearline as its own roa
   pool"). Rejected: it forces user-independent market freshness through per-request inference.
   At 150–300 requests per second of peak traffic, with sidebar refresh storms, this pays
   per-request for what nearline pays per-event — roughly ten times the compute for the same
-  freshness on the market-state layer.
+  freshness on the market-state layer (the arithmetic in the decision above).
 - **Online-heavy: request-time candidate generation and ranking.** Rejected: exceeds the
   [ADR-0007](0007-cost-model.md) budget by an order of magnitude, and weakens auditability, because reproducing what
   was recommended and why becomes harder when everything is computed on the fly.

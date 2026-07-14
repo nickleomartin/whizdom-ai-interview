@@ -33,6 +33,11 @@ real-time infrastructure in the design.
 Nearline: event-triggered recomputation within about a minute, off the request path. Online: on
 the request path, within the latency budget. See [ADR-0001](adr/0001-offline-nearline-online-composition.md).
 
+**Fan-out (of a trigger event)** — how many users' stored itemsets one event invalidates. A
+per-user event (this user viewed something) has a fan-out of one; a market event (a goal) has a
+fan-out in the thousands. Fan-out size decides whether event-triggered recomputation needs a
+targeting policy ([ADR-0001](adr/0001-offline-nearline-online-composition.md)).
+
 **Invalidation storm** — one match event (a goal) suspending hundreds of markets across all
 tenants at once. The characteristic load problem of a sportsbook recommender; request rate is not.
 

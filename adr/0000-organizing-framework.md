@@ -63,6 +63,13 @@ different mechanisms — and each cell has one owner. Which cells are active at 
 version is [ADR-0001](0001-offline-nearline-online-composition.md)'s Stage × Version matrix; the design's core cost strategy is moving work
 leftward in this table wherever freshness allows.
 
+The rule deciding which cell work belongs in deserves stating once, because every later decision
+applies it: **compute is paced by the rate at which its inputs change, not the rate at which its
+results are read.** Work runs online only when its inputs cannot exist before the request
+arrives (session intent). Everything else moves leftward to the tier matching how fast its
+inputs actually change — which is why the tier assignments in the behaviour-layer table
+(TASKS.md §6) are derived from each layer's timescale and scope, not chosen by taste.
+
 ### What sits on neither axis
 
 Four records are deliberately **cross-cutting** — they constrain every cell rather than living
