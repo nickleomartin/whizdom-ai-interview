@@ -41,19 +41,19 @@
 
 ## 10. Composition — How the Tiers Work Together
 
-<!-- The offline/nearline/online contract; how online consumes/overrides itemsets; fallback chain. ADR-0001. -->
+<!-- The offline/nearline/online contract; how online consumes/overrides itemsets; fallback chain. [ADR-0001](adr/0001-offline-nearline-online-composition.md). -->
 
 ## 11. Modelling Choices
 
-<!-- Candidate generation (multi-source blend), ranking (GBDT), cold-start, heterogeneous signals; alternatives rejected. ADR-0002, ADR-0003. -->
+<!-- Candidate generation (multi-source blend), ranking (GBDT), cold-start, heterogeneous signals; alternatives rejected. [ADR-0002](adr/0002-candidate-generation.md), [ADR-0003](adr/0003-ranking-model.md). -->
 
 ## 12. Multi-Tenancy
 
-<!-- Pooled model + siloed data; decision criteria; new-tenant cold-start. ADR-0006. -->
+<!-- Pooled model + siloed data; decision criteria; new-tenant cold-start. [ADR-0006](adr/0006-multi-tenancy.md). -->
 
 ## 13. Responsible Gambling & Eligibility
 
-<!-- Two-point filtering; rule packs at placement/market-type/item×user granularity; auditability; regulatory grounding (GAMSTOP/OASIS/UKGC). ADR-0005. -->
+<!-- Two-point filtering; rule packs at placement/market-type/item×user granularity; auditability; regulatory grounding (GAMSTOP/OASIS/UKGC). [ADR-0005](adr/0005-rg-enforcement-point.md). -->
 
 ## 14. Evaluation
 

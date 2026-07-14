@@ -12,7 +12,7 @@ This is a design exercise — there is no runnable pipeline, no real data, and n
 |---|---|
 | `design.md` | **The main deliverable.** Design document — read this first |
 | `TASKS.md` | Working document: requirements, assumptions, decision process, research adoptions/Bin |
-| `adr/` | Architecture Decision Records (template + ADR-0001…0007) |
+| `adr/` | Architecture Decision Records (template + [ADR-0001](adr/0001-offline-nearline-online-composition.md)…0007) |
 | `stubs/` | Illustrative Python stubs — design artifacts, not an implementation |
 | `assessment/` | The original assessment brief (PDF) |
 | `sessions/` | AI agent usage log: curated markdown + raw tool-call JSONL (auto-logged by hook) |

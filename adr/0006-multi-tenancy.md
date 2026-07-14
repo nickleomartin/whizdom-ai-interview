@@ -18,12 +18,12 @@ The forces:
 - **New-tenant cold-start.** A per-tenant model has zero training data on the day a tenant
   launches. The platform's sales pitch — working recommendations from launch — dies without some
   form of pooling.
-- **Cost (ADR-0007).** N models means N training pipelines, N evaluation harnesses, and N drift
+- **Cost ([ADR-0007](0007-cost-model.md)).** N models means N training pipelines, N evaluation harnesses, and N drift
   monitors, against a budget of about €19k per month for the whole recommender.
 - **Contracts and GDPR.** Operators reasonably resist their behavioural data improving a
   competitor's product. Any cross-tenant use of data needs explicit contractual opt-in.
 - **Jurisdiction mix.** Eligibility rules are per-tenant configuration regardless of the model
-  choice (ADR-0005), so tenancy does not decide compliance — but it does decide everything else.
+  choice ([ADR-0005](0005-rg-enforcement-point.md)), so tenancy does not decide compliance — but it does decide everything else.
 
 ## Decision
 
@@ -55,7 +55,7 @@ The forces:
 
 ## Alternatives Considered
 
-- **Per-tenant models.** Rejected: multiplies training and monitoring cost against ADR-0007, and
+- **Per-tenant models.** Rejected: multiplies training and monitoring cost against [ADR-0007](0007-cost-model.md), and
   gives every new tenant a cold-start problem that undermines the B2B value proposition.
 - **Fully pooled data, no silos.** Rejected: contractually unrealistic between competing
   operators, and creates GDPR purpose-limitation risk.

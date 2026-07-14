@@ -46,7 +46,7 @@ Adopt a two-sided cost model as a binding constraint on every serving-tier decis
 
 - CPU-only serving at every tier.
 - An offline-heavy composition: request-time compute is the scarcest resource and is reserved for
-  the one thing only it can do — session intent (ADR-0001).
+  the one thing only it can do — session intent ([ADR-0001](0001-offline-nearline-online-composition.md)).
 - Every freshness escalation (batch to nearline to online) must pass an experiment gate showing
   the added spend pays for itself.
 - Capacity is sized for the ~10x Saturday peak (150–300 requests per second) while cost is

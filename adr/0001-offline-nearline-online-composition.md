@@ -22,7 +22,7 @@ signal is actually two different things with different economics:
 A two-tier design (batch plus request-time) has to push both kinds of freshness through the
 expensive request-time path, or serve neither. The Netflix three-tier blueprint — offline,
 nearline, online, described in [Amatriain's blueprint retrospective](https://amatria.in/blog/RecsysArchitectures)
-— matches the two-way split exactly. The cost ceiling from ADR-0007 (about €0.75 per thousand
+— matches the two-way split exactly. The cost ceiling from [ADR-0007](0007-cost-model.md) (about €0.75 per thousand
 requests) is a binding input to this decision.
 
 ## Decision
@@ -50,7 +50,45 @@ refresh if one exists, otherwise the last batch build), applies the final gate, 
 items within the gated set. The online tier never generates its own candidates, and never
 overrides the gate. If a component fails, the system degrades in order: online re-rank → nearline
 itemset → stale itemset, flagged → segment-popularity default. The gate itself never degrades —
-if it cannot evaluate, nothing is served (ADR-0005).
+if it cannot evaluate, nothing is served ([ADR-0005](0005-rg-enforcement-point.md)).
+
+### How nearline works, concretely
+
+**Mechanism.** A market event arrives on the stream — a goal, a market suspension, a large odds
+swing. Nearline workers consume it, look up which users' stored itemsets are affected, and
+rebuild just those itemsets within about a minute. The rebuild runs the same stage logic as the
+offline batch job (retrieval blend, eligibility pre-filter, scoring, ordering), scoped to the
+affected users instead of everyone. Serving is untouched: requests still just look up an itemset
+— they simply find a fresher one.
+
+**Event coalescing.** One goal produces a burst of correlated events (dozens of market
+suspensions and recreations on the same fixture). Workers debounce per fixture: the burst
+collapses into one recompute per affected user, not one per market event.
+
+**Which users get recomputed — the targeting policy.** "Affected" is an index lookup, not a
+scan: itemsets are indexed by the fixtures and slots they contain. But on a busy Saturday the
+affected set for a big fixture can be a large share of all active users, so affected users are
+recomputed in priority order against a bounded worker budget:
+
+1. **Active session right now** (session heartbeat within the last few minutes) — recomputed
+   immediately. These users can actually see the staleness.
+2. **Recently active** (activity within ~24h) — recomputed as budget allows, within minutes.
+3. **Dormant** — not recomputed at all; their next hourly batch build picks up the change.
+   A dormant user's itemset is refreshed before they return, so spending storm-time compute on
+   them buys nothing.
+
+If the budget saturates (many simultaneous fixtures), tier 2 degrades gracefully toward the
+batch cadence while tier 1 holds — and the validity KV at the gate keeps every user safe from
+suspended markets in the meantime, whatever their recompute tier.
+
+**Why per-event beats per-request.** Live market state is user-independent: one goal invalidates
+the itemsets of every user holding that fixture's markets. Paying per-request (re-rank with live
+features at request time) means paying model inference repeatedly for the same underlying change
+during sidebar refresh storms. Paying per-event (recompute once, serve via cheap lookups) is
+roughly ten times cheaper for the same freshness on this signal layer. Only session intent —
+what this user did seconds ago — genuinely needs request-time inference, because it cannot be
+precomputed for anyone else. That is the entire case for nearline as its own roadmap version
+(v3) ahead of request-time re-ranking (v4).
 
 ## Consequences
 
@@ -62,7 +100,7 @@ if it cannot evaluate, nothing is served (ADR-0005).
 - Cost scales with event rate (nearline) plus request rate (cheap lookups), instead of request
   rate multiplied by model inference cost.
 - Three tiers share the same stage logic, which creates a real risk of divergence. This is why
-  the shared feature contract (ADR-0004) exists, and why filter, scoring, and ordering logic is
+  the shared feature contract ([ADR-0004](0004-feature-store-contract.md)) exists, and why filter, scoring, and ordering logic is
   written once and invoked from each tier.
 - Nearline needs to know which users an event affects. This is kept simple by indexing itemsets
   by the markets and fixtures they contain.
@@ -82,7 +120,7 @@ if it cannot evaluate, nothing is served (ADR-0005).
   per-request for what nearline pays per-event — roughly ten times the compute for the same
   freshness on the market-state layer.
 - **Online-heavy: request-time candidate generation and ranking.** Rejected: exceeds the
-  ADR-0007 budget by an order of magnitude, and weakens auditability, because reproducing what
+  [ADR-0007](0007-cost-model.md) budget by an order of magnitude, and weakens auditability, because reproducing what
   was recommended and why becomes harder when everything is computed on the fly.
 - **Streaming full recompute: re-rank every user on every event.** Rejected: on a busy Saturday
   the worst case approaches all-users × all-markets. Nearline's affected-users targeting is the
