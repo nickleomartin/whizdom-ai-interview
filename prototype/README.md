@@ -52,7 +52,9 @@ seconds and labelled "simulated ~60s" in the x-ray.
 4. **Back to Emma. Open SIM CONTROL** (bottom drawer) and trigger a goal on a live match:
    markets padlock instantly (validity gate), a goal toast fires, and — with x-ray on — a
    nearline countdown appears, then the sidebar reshuffles with highlighted fresh entries.
-5. **Serving versions**: switch to **v1** and trigger another goal — padlocks appear but the
+5. **Serving versions**: switching versions keeps the match state — same user, different
+   serving backend (the pipeline log records the switch). Switch to **v1** and trigger
+   another goal — padlocks appear but the
    recommendations never recompose, and the itemset-age badge keeps growing (pre-goal
    correct-score angles go visibly stale). **v3** — recomposition returns ~12s after events,
    but clicking around changes nothing. **v4** — click a couple of Over/Under market cards

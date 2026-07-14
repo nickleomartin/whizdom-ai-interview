@@ -111,6 +111,12 @@ only inside the x-ray debug view, clearly marked as suppressed-with-rule-ID, nev
 
 ## Serving-version toggle (v1 / v3 / v4)
 
+Switching version keeps the sim world (scores, odds, bets, pipeline log) — same user,
+different serving backend. The itemset baseline is rebuilt at the current sim time and the
+switch is logged (`serving version switched to vX`). Only a persona switch resets the whole
+session (different user). *(Amended 2026-07-14: the original spec reset the session on
+version change too, which erased exactly the evidence the x-ray exists to show.)*
+
 - **v1** — itemset frozen at session start. Validity gate still live (padlocks) but no
   re-ordering or new items. X-ray staleness badge ages ("itemset 4m old"). After a goal,
   recs go visibly wrong (pre-goal correct-score angles) — staleness made visceral.
@@ -170,8 +176,9 @@ prototype/
 - Sim is deterministic-enough: seeded RNG so refresh gives a similar session (not required
   to be perfectly reproducible).
 - Pausing the sim pauses odds ticks, nearline countdowns, and match clocks together.
-- Persona/version/skin switches never crash mid-animation: the surface fully re-derives from
-  state on switch.
+- Persona/version/skin switches never crash mid-animation. Persona switch fully re-derives
+  the session; version switch keeps the sim world and rebuilds only the itemset baseline;
+  skin/device/x-ray are display-only.
 - Empty states: cold-start persona with a rail that has no eligible items shows the segment
   default, never an empty rail (mirrors the design's degrade chain).
 
