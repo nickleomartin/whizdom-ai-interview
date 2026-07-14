@@ -15,6 +15,13 @@ export const STAGE_COLOR: Record<Stage, string> = Object.fromEntries(
   STAGES.map((s) => [s.id, s.color])
 ) as Record<Stage, string>
 
+/** Subtitles that change with the roadmap version — kept truthful per version. */
+function subForVersion(id: string, sub: string, version: Version): string {
+  if (id === 'retrieval') return version >= 2 ? sub : '4 sources → 400–600 candidates'
+  if (id === 'ordering') return version >= 2 ? sub : 'five rules — own-mix @ v2'
+  return sub
+}
+
 export function Diagram({ version }: { version: Version }) {
   const [selected, setSelected] = useState<string | null>('nearline')
   const [activeStage, setActiveStage] = useState<Stage | null>(null)
@@ -128,7 +135,7 @@ export function Diagram({ version }: { version: Version }) {
                     </text>
                     {n.sub && (
                       <text className="node-sub" x={n.x + 10} y={n.y + 44}>
-                        {n.sub}
+                        {subForVersion(n.id, n.sub, version)}
                       </text>
                     )}
                     {allStages &&
