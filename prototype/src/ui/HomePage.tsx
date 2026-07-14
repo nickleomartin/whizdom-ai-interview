@@ -5,7 +5,9 @@ import { RecCard } from './RecCard'
 import { FixtureList } from './FixtureList'
 import { StalenessBadge } from '../xray/EventLogPanel'
 
-export function HomePage() {
+interface Props { onSelectFixture?: (fixtureId: string) => void }
+
+export function HomePage({ onSelectFixture }: Props) {
   const s = useStore()
   let served = serve(s, 'home_carousel')
 
@@ -39,7 +41,7 @@ export function HomePage() {
         </>
       )}
 
-      <FixtureList />
+      <FixtureList onSelect={onSelectFixture} />
     </div>
   )
 }
