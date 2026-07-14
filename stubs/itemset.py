@@ -1,7 +1,7 @@
 """The stored itemset — what one pre-computed recommendation entry looks like.
 
 Built by the offline batch job (hourly) and rebuilt by nearline workers for affected
-users from v3 (ADR-0001). Looked up by the serve path, which applies the final gate
+users from v3 (ADR-0001). Looked up by the serve path, which applies the compliance gate
 and slot resolution before anything reaches a user (ADR-0005).
 
 Illustrative, not executable: dataclasses carry the design; nothing here runs as a

@@ -185,13 +185,13 @@ Design must reflect these, not generic "RG filters":
 - Options: (a) pre-filter candidates before ranking, (b) post-rank hard removal,
   (c) both — two-point filtering [decision], (d) soft penalty in ranking score
 - Decision shape: (i) eligibility pre-filter at itemset build (jurisdiction rule packs, RG tier — slow-moving,
-  prunes scoring spend); (ii) validity + RG final gate at serve (suspended markets, live limit trips —
+  prunes scoring spend); (ii) validity + RG compliance gate at serve (suspended markets, live limit trips —
   fast-moving, last word before user). Per [Amatriain's critique](https://amatria.in/blog/RecsysArchitectures)
   of single-stage filtering: different logic types belong at different points
 - Rule packs operate at THREE granularities (regulatory grounding above): **placement** (DE: in-play sidebar off),
   **market-type** (DE: live-betting classes banned), **item×user** (at-risk flag ⇒ suppress promotional recs;
   UK cross-product ban). Self-exclusion registry check assumed upstream of recsys entirely
-- Constraint: RG must be auditable — hard filter, not soft penalty alone; final gate is the auditable choke
+- Constraint: RG must be auditable — hard filter, not soft penalty alone; compliance gate is the auditable choke
   point, logging every suppression with rule ID
 
 ### [ADR-0006](adr/0006-multi-tenancy.md): Multi-Tenancy Model
@@ -275,7 +275,7 @@ validated at Instagram/Pinterest/Instacart, consistent with [surveys](https://ar
 2. **Filtering** — business rules the model cannot learn. **Adopt Amatriain's critique of Merlin**
    ("overly prescriptive about when filtering occurs; conflates different logic types"): filtering is TWO-POINT,
    not one stage — (i) *eligibility pre-filter* at itemset build time (jurisdiction, RG tier, slow-moving rules —
-   prunes before scoring spend), (ii) *validity + RG final gate* immediately before serving (suspended markets,
+   prunes before scoring spend), (ii) *validity + RG compliance gate* immediately before serving (suspended markets,
    live RG limit trips — fast-moving, last word). Maps to [ADR-0005](adr/0005-rg-enforcement-point.md) with answer "both".
 3. **Scoring** — expensive per-candidate model, richest features. GBDT (v2+).
 4. **Ordering** — final composition ≠ score sort: diversity, calibration to user's own mix, popularity-bias

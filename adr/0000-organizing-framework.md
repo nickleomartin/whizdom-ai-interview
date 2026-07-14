@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-07-14
 
-Terms used here (tier, itemset, final gate) are defined in the [glossary](../GLOSSARY.md).
+Terms used here (tier, itemset, compliance gate) are defined in the [glossary](../GLOSSARY.md).
 This is the meta-decision every other ADR hangs from — numbered zero accordingly.
 
 ## Context
@@ -58,7 +58,7 @@ The same stage logic can run in three places, with very different costs:
 | **Online** | During the request, inside the latency budget | Most expensive — paid on every request |
 
 The grid is what makes this useful. "Filtering, offline" is the eligibility pre-filter at
-build time. "Filtering, online" is the final gate at serve time. Same stage, two cells, two
+build time. "Filtering, online" is the compliance gate at serve time. Same stage, two cells, two
 different mechanisms — and each cell has one owner. Which cells are active at which roadmap
 version is [ADR-0001](0001-offline-nearline-online-composition.md)'s Stage × Version matrix; the design's core cost strategy is moving work
 leftward in this table wherever freshness allows.
@@ -83,7 +83,7 @@ submission at all.
 | Assessment topic | Where it lives in the framework |
 |---|---|
 | Offline path | The offline tier: all four stages running at itemset-build time ([ADR-0001](0001-offline-nearline-online-composition.md)) |
-| Online path | The online tier: final gate + slot resolution always; the re-ranker from v4 ([ADR-0001](0001-offline-nearline-online-composition.md), [ADR-0005](0005-rg-enforcement-point.md)) |
+| Online path | The online tier: compliance gate + slot resolution always; the re-ranker from v4 ([ADR-0001](0001-offline-nearline-online-composition.md), [ADR-0005](0005-rg-enforcement-point.md)) |
 | Offline/online composition | The tier-escalation contract and Stage × Version matrix ([ADR-0001](0001-offline-nearline-online-composition.md)) |
 | Modelling choices | The retrieval and scoring stages ([ADR-0002](0002-candidate-generation.md), [ADR-0003](0003-ranking-model.md)) plus the feature contract ([ADR-0004](0004-feature-store-contract.md)) |
 | Responsible Gambling & eligibility | The filtering stage at both its points ([ADR-0005](0005-rg-enforcement-point.md)), reinforced structurally in scoring ([ADR-0003](0003-ranking-model.md)) and ordering ([ADR-0008](0008-ordering-stage.md)) |

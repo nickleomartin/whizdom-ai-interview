@@ -16,7 +16,7 @@ Latency budget: P99 <= 100ms end-to-end. Illustrative, not executable — see CL
 #     #    Every degradation is logged and metered.
 #     itemset = fetch_itemset(ctx, placement)          # ~1-2ms
 #
-#     # 3. FINAL GATE — hard filter, every request, all versions (ADR-0005)
+#     # 3. COMPLIANCE GATE — hard filter, every request, all versions (ADR-0005)
 #     #    - validity KV: drop suspended/expired items (<=5s lag)
 #     #    - slot resolution: late-bind slots to the currently open market ID;
 #     #      a slot with no open market resolves to nothing and is skipped
@@ -25,7 +25,7 @@ Latency budget: P99 <= 100ms end-to-end. Illustrative, not executable — see CL
 #     #    Every suppression logged with {user ctx, item/slot, rule ID, pack version, ts}.
 #     #    FAIL CLOSED: if the gate cannot evaluate, serve NOTHING. The only
 #     #    component where compliance outranks availability.
-#     gated = final_gate(itemset, ctx)                 # ~3-5ms
+#     gated = compliance_gate(itemset, ctx)                 # ~3-5ms
 #
 #     # 4. Optional request-time re-rank (v4 only; ADR-0003, stubs/online_reranker.py)
 #     #    session-intent features under a hard 30ms budget; on breach or missing

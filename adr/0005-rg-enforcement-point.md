@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-07-14
 
-Terms used here (final gate, validity KV, itemset, tier) are defined in the
+Terms used here (compliance gate, validity KV, itemset, tier) are defined in the
 [glossary](../GLOSSARY.md). The central term of this ADR is defined below.
 
 ## Terminology
@@ -59,7 +59,7 @@ job, and in nearline refreshes from v3):
   This also saves compute.
 - Every stored itemset records which rule-pack version it was built under.
 
-**Point 2 — the final gate, applied at serve time on every request** (all versions, v1 through v4):
+**Point 2 — the compliance gate, applied at serve time on every request** (all versions, v1 through v4):
 
 - Applies the fast-moving state: the market-validity lookup (is this market still open? — at
   most 5 seconds stale), and live RG signals such as a deposit-limit trip during the current

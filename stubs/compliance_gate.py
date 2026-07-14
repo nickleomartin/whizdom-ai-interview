@@ -1,4 +1,4 @@
-"""The final gate — the fail-closed compliance filter every response passes (ADR-0005).
+"""The compliance gate — the fail-closed compliance filter every response passes (ADR-0005).
 
 Runs at serve time on every request, all versions v1-v4. Applies fast-moving state
 (market validity, live RG signals) and re-applies current rule packs if they changed
@@ -36,7 +36,7 @@ class GateResult:
     suppressions: tuple[Suppression, ...]   # logged, never silently dropped
 
 
-def final_gate(itemset: Itemset, user_context: dict) -> Optional[GateResult]:
+def compliance_gate(itemset: Itemset, user_context: dict) -> Optional[GateResult]:
     """Apply the serve-time gate to a stored itemset.
 
     Contract:

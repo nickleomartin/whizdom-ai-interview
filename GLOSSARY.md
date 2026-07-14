@@ -21,7 +21,7 @@ items are referenced by concrete ID instead.
 jurisdiction, combined with tenant configuration. Given a user context, an item or slot, and a
 placement, it answers: allowed or suppressed. Versioning makes past decisions reconstructable.
 
-**Final gate (or: the gate)** — the serve-time hard filter that every response must pass,
+**Compliance gate (or: the gate)** — the serve-time hard filter that every response must pass,
 applying fast-moving state: market validity and live RG signals. The gate fails closed — if it
 cannot evaluate, nothing is served. See [ADR-0005](adr/0005-rg-enforcement-point.md).
 

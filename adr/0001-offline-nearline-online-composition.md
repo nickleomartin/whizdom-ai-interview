@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-07-14
 
-Terms used here (itemset, tier, final gate, validity KV, invalidation storm, experiment gate) are
+Terms used here (itemset, tier, compliance gate, validity KV, invalidation storm, experiment gate) are
 defined in the [glossary](../GLOSSARY.md).
 
 ## Context
@@ -27,7 +27,7 @@ decision.
 
 ## Decision
 
-The system runs on three execution tiers. Serving is always a lookup plus the final gate, at
+The system runs on three execution tiers. Serving is always a lookup plus the compliance gate, at
 every version. Freshness escalates in cost order — batch, then nearline, then online — and each
 escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md §7).
 
@@ -41,13 +41,13 @@ escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md �
    Serving is untouched: it remains a lookup, so nearline adds freshness without adding any
    request-time compute.
 
-3. **Online (request-time).** Always runs the final gate — cheap rule-and-lookup evaluation
+3. **Online (request-time).** Always runs the compliance gate — cheap rule-and-lookup evaluation
    (validity lookups plus rule-pack checks, [ADR-0005](0005-rg-enforcement-point.md)), never
    model inference — present from v1. From v4 it may additionally re-rank the itemset using
    session features, within a 30ms compute budget.
 
 **The composition contract.** Serving consumes the freshest available itemset (the nearline
-refresh if one exists, otherwise the last batch build), applies the final gate, and may re-order
+refresh if one exists, otherwise the last batch build), applies the compliance gate, and may re-order
 items within the gated set. The online tier never generates its own candidates, and never
 overrides the gate. If a component fails, the system degrades in order: online re-rank → nearline
 itemset → stale itemset, flagged → segment-popularity default. The gate itself never degrades —

@@ -31,7 +31,7 @@ def rerank(
     Contract (the boundaries matter more than the body):
 
     - INPUT IS POST-GATE. This function only ever sees entries that passed the
-      final gate (ADR-0005). It cannot re-admit anything, and it runs after slot
+      compliance gate (ADR-0005). It cannot re-admit anything, and it runs after slot
       resolution — every entry is a concrete, currently-open item.
     - RE-ORDER ONLY. Same entries in, same entries out, order may change. No
       candidate generation, no gate overrides, no promotional re-tagging.
