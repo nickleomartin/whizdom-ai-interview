@@ -14,10 +14,15 @@ only after this process is complete.
 - Both paths must compose — not independent systems
 - Hard constraints: RG signals, jurisdictional eligibility
 
-### Non-functional (to decide/clarify)
-- [ ] Latency budget for online path (assume P99 target: 50ms? 100ms?)
-- [ ] Freshness SLA for offline path (how stale is acceptable?)
-- [ ] Availability: fallback if online ranker is down?
+### Non-functional (decided 2026-07-14)
+- [x] **Latency**: P99 ≤ 100ms end-to-end serve; v4 request-time re-rank compute capped at ≤30ms with
+  fallback on breach. Comfortable on CPU; honest for B2B (operator front-end adds its own latency on top)
+- [x] **Freshness**: itemsets rebuilt hourly (v1 may start nightly); market-validity KV lags the stream
+  ≤5s so a suspended market never surfaces. v3 nearline tightens affected-user refresh to ~1 min
+- [x] **Availability**: degrade chain, never empty — online re-rank → nearline itemset → stale itemset
+  (flagged) → segment popularity default. Recsys never 500s; every degradation logged + metered.
+  **Exception: the RG/eligibility gate never degrades — if the gate is unavailable, serve nothing.**
+  Compliance outranks availability
 
 ### Throughput estimate (derive explicitly in design.md)
 - 10 tenants × 50k MAU = 500k MAU platform-wide; DAU/MAU ~20% → 100k DAU; ~1.5 sessions/day → 150k sessions/day
@@ -35,12 +40,17 @@ only after this process is complete.
 
 ## 2. Assumptions to Clarify (customer / platform)
 
-### Customer/user assumptions
-- [ ] B2B platform: are "users" the sportsbook's end-users or the operator clients? (Assume end-users of operator's sportsbook)
-- [ ] User history depth: do we have months of bet history per user, or is churn high and data sparse?
-- [ ] User session patterns: mobile-first? average session length? (affects in-play sidebar relevance)
-- [ ] Cold-start prevalence: what % of requests are new/anonymous users?
-- [ ] RG risk tier: is this pre-computed upstream, or do we derive it?
+### Customer/user assumptions (fixed 2026-07-14)
+- [x] "Users" = end-users of each operator's sportsbook (not the operator clients)
+- [x] History depth: median ~3 months of activity; heavy churn tail — assume ~30% of MAU have
+  <5 lifetime bets (sparse). Design must work at both ends
+- [x] Session patterns: mobile-first (~70%); median session ~10 min; in-play sidebar dwell
+  concentrated around live fixtures
+- [x] Cold-start prevalence: ~15–20% of requests from users with <5 interactions. Anonymous
+  (pre-login) browsing exists but personalised recs require identity anyway — jurisdiction and RG
+  checks need a known user. Anonymous → segment/popularity default only
+- [x] RG risk tier: consumed from upstream, not derived here — regulator-mandated automated harm
+  detection means the platform must already produce it (see regulatory grounding below)
 
 ### RG / jurisdiction regulatory grounding (researched 2026-07-14)
 Design must reflect these, not generic "RG filters":
@@ -68,18 +78,30 @@ Design must reflect these, not generic "RG filters":
   (consent-gated, at-risk-suppressed); organic relevance ordering treated more leniently but still RG-filtered.
   Flag for compliance review — do not resolve unilaterally
 
-### Platform/data assumptions
-- [ ] Upstream event streams exist and are queryable — no ingestion to build
-- [ ] Odds updates arrive at what frequency? (seconds? sub-second?)
-- [ ] Catalog size: how many active markets at any time? (1k? 100k?)
-- [ ] Is a feature store already in place, or are we speccing it from scratch?
-- [ ] Is there an existing A/B framework, or do we need to spec one?
-- [ ] Jurisdiction eligibility: is this a lookup (user → allowed markets) or a rule engine?
+### Platform/data assumptions (fixed 2026-07-14)
+- [x] Upstream event streams exist and are queryable — no ingestion to build (per brief)
+- [x] Odds updates: seconds-level for in-play (sub-second bursts on major events); pre-match slower
+  (minutes). Drives the ≤5s validity-KV SLA
+- [x] Catalog size: ~10k active markets at any time as working number (hundreds of concurrent
+  events × dozens of markets each); thousands, not millions — grounds ADR-0002's "retrieval stays light"
+- [x] Catalog churn (added 2026-07-14): in-play micro-markets are born and die in *minutes* —
+  "team X to score next?" is settled and **recreated with a new market ID after every goal** (~3 goals/match
+  ⇒ ~4 IDs per fixture for the "same" question); dozens of micro-market births per live match-hour.
+  Consequence: itemsets must reference **stable slots** (fixture × market-type), late-bound to the concrete
+  live market ID at serve — never store short-lived IDs in a batch-built pool (see §6b, ADR-0002)
+- [x] Feature store: none assumed to exist — we spec the *contract* (ADR-0004), not the implementation
+- [x] A/B framework: assume basic experiment assignment exists platform-side; we spec metrics,
+  guardrails, and analysis approach, not the assignment infra
+- [x] Jurisdiction eligibility: platform resolves user → jurisdiction + consent flags; the recsys
+  owns *applying* rule packs (placement / market-type / item×user) in its filtering points (ADR-0005)
 
-### Business assumptions
-- [ ] Primary metric: bet conversion, session engagement, or revenue-per-session?
-- [ ] RG constraints: are these audit requirements (log + block) or soft nudges?
-- [ ] Operator-level customisation: can operators override default ranking logic?
+### Business assumptions (fixed 2026-07-14)
+- [x] Primary metric: decided at evaluation design (TASKS step 12); candidate primary = bet
+  conversion per session with session-depth secondary — never raw CTR alone
+- [x] RG constraints: audit requirements — log + block (hard gate, suppression logged with rule ID);
+  never soft nudges
+- [x] Operator-level customisation: config only (candidate-source proportions, ordering rules,
+  placement config) — no ranking-logic overrides in v1–v4 (consistent with ADR-0006 pooled model)
 
 ### SaaS / tenancy assumptions (confirmed stances)
 - Assume ~10 mid-size operator tenants, each ~€1-5M GGR/month (below the ~$20-30M/yr GGR
@@ -327,6 +349,30 @@ respects RG constraints (never maximise engagement for at-risk users).
 The market-state / session-intent split is what justifies nearline as its own version: most of the freshness
 value lands *before* paying request-time serving costs.
 
+### 6b. Catalog-side mental model — item lifespan per type (added 2026-07-14)
+
+The brief's "time-decaying catalog (matches expire; new ones appear continuously)" decomposes per item
+type. Two distinct freshness problems fall out: **item existence** (does this market exist yet/still?) and
+**attribute state** (price, suspension) — conflating them makes hourly batch look impossible; separating
+them is the design.
+
+| Item type | Example (synthetic) | Created | Dies | Lifespan | Hourly batch discovers? |
+|---|---|---|---|---|---|
+| Event (fixture) | London Reds v North Wanderers, Sat 17:30 | days–weeks ahead | full time | days–weeks | yes |
+| Pre-match market | Match Result; Over/Under 2.5; BTTS | with the event | kickoff (or rolls in-play) | days | yes |
+| In-play micro-market | "London Reds to score next?"; "Goal in next 10 mins?" | at kickoff or **mid-match** — recreated per goal cycle | minutes later | **minutes** | **no — born + dead between builds** |
+| Selection | "London Reds to win @ 2.10" | with market | with market | = market; *price* moves in seconds | identity yes / price no |
+| SGP / bet builder | "Carter to score + Over 2.5 @ 8.50" | templated over markets | shortest leg dies | days pre-match / minutes live | pre-match yes / live no |
+| Acca | "Weekend 3-fold @ 12.4" | editorial/templated | earliest leg kickoff | hours–day | yes (daily cadence natural) |
+| Boost / promo | "Reds to win — was 2.25 NOW 2.40" | trader/marketing, scheduled | campaign end | hours–day, known TTL | yes |
+
+Why hourly batch survives anyway: (i) personalisation value attaches to **stable anchors** (teams, leagues,
+market *types*, odds bands — entities living days–years); (ii) **late binding** — itemsets recommend slots
+(fixture × market-type), the concrete short-lived market ID is resolved at serve from the live catalog /
+validity KV; (iii) the ≤5s validity gate means a stale pool can never surface a dead market. What hourly
+genuinely cannot do — discover markets born mid-match — is precisely the v3 nearline justification and the
+"novelty starvation" pathology (§8).
+
 ---
 
 ## 7. Evolution Roadmap (v1 → v4, experiment-gated)
@@ -344,7 +390,9 @@ The delivery strategy — not a one-shot end state. Freshness escalates in cost 
 - GBDT ranker on interaction features (bet history, odds views, bet-type/odds-band affinity; hard negatives
   from impressions), trained offline, still batch-served; ordering adds calibration to user's own mix
 - Gate to v3: v2 beats v1 in A/B on primary metric without guardrail regression, AND staleness shown binding
-  (measurable: CTR decay vs itemset age)
+  — two distinct staleness metrics (§6b): (a) *attribute staleness*: CTR decay vs itemset age;
+  (b) *existence miss / coverage*: share of live betting volume landing on markets born after the last
+  itemset build (hourly batch structurally cannot recommend these)
 
 ### v3 — Nearline refresh *(adds live market state)*
 - Event-triggered incremental recompute: match event (goal, suspension, odds swing) → recompute itemsets for
@@ -388,6 +436,8 @@ at v3, and a feature source only at v4 — stream infra investment is incrementa
 - [ ] Holdout strategy: time-based split (not random — data leakage risk with temporal signals)
 - [ ] Counterfactual: IPS or DM estimator for logged bet data?
 - [ ] Cold-start coverage metric?
+- [ ] Catalog-coverage metric (§6b): share of live engagement on markets born after last itemset build —
+  the item-*existence* staleness measure, distinct from CTR-decay attribute staleness; the v2→v3 gate input
 
 ### Online evaluation
 - [ ] Primary metric: bet conversion rate, session depth, or revenue-per-bet?
