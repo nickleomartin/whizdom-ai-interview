@@ -14,10 +14,9 @@ glossary and [ADR-0003](0003-ranking-model.md)) — the sources below produce ev
 accumulators, and boosts into one pool. Two facts about this platform shape the decision.
 
 **The catalog is small.** Roughly 10–20k active markets at any time — thousands, not the millions
-that web-scale retrieval techniques were built for. Amatriain's blueprint retrospective
-([Blueprints for Recommender Systems](https://amatria.in/blog/RecsysArchitectures)) makes the
-point directly: candidate selection is *optional* at small catalog scale. Netflix skips it.
-Retrieval here must justify existing at all before it justifies being clever.
+that web-scale retrieval techniques were built for. Amatriain's blueprint retrospective (see
+References) makes the point directly: candidate selection is *optional* at small catalog scale.
+Netflix skips it. Retrieval here must justify existing at all before it justifies being clever.
 
 **The catalog churns violently** (TASKS.md §6b). In-play micro-markets live for minutes:
 "team to score next?" is settled and recreated with a new market ID after every goal — roughly
@@ -35,9 +34,9 @@ not concrete market IDs. The serve path late-binds each slot to the currently op
 the validity KV lookup it already performs. Long-lived items — events, pre-match markets,
 accumulators, boosts — are referenced directly by ID with a time-to-live.
 
-**Generation — a blend of named heuristic sources, no learned retrieval model.** The offline
-build assembles each user's candidate pool from explicitly named generators, with proportions
-that are tenant-tunable configuration:
+**Generation — a blend of named sources: four heuristic, one learned.** The offline build
+assembles each user's candidate pool from explicitly named generators, with proportions that
+are tenant-tunable configuration:
 
 1. **User affinity** — fixtures and market types matching the user's sports, leagues, and teams,
    from warehouse history. The personalised core, for users with history.
@@ -49,8 +48,8 @@ that are tenant-tunable configuration:
 4. **Tenant promotions** — operator-configured items (boosts, featured markets), clearly tagged
    as promotional so the RG rules for promotional content apply ([ADR-0005](0005-rg-enforcement-point.md)).
 
-5. **Learned class affinity (from v2)** — an EASE model (a closed-form linear item-item model,
-   [Steck 2019](https://arxiv.org/abs/1905.03375)) trained not on market IDs but on stable
+5. **Learned class affinity (from v2)** — an EASE model (a closed-form linear item-item model;
+   see References) trained not on market IDs but on stable
    *item classes* (league × market type, a vocabulary of a few thousand). It learns
    cross-class co-engagement — "EPL over/under bettors also engage EPL both-teams-to-score" —
    and its top classes for a user are instantiated into current fixtures via slots. This is the
@@ -60,8 +59,10 @@ that are tenant-tunable configuration:
 
 Sources 1–4 are simple queries over warehouse aggregates or catalog state; source 5 is the only
 learned component, arrives with v2 (it shares training-data plumbing with the ranking model),
-and adds no serving cost — it feeds the same itemset build. There is no embedding model and no
-nearest-neighbour index at any version. The eligibility pre-filter ([ADR-0005](0005-rg-enforcement-point.md)) runs against the
+and adds no serving cost — it feeds the same itemset build. Like the ranking model, EASE is
+trained pooled across tenants under the same contractual opt-in rules ([ADR-0006](0006-multi-tenancy.md)); its class
+vocabulary is tenant-independent. There is no embedding model and no nearest-neighbour index at
+any version. The eligibility pre-filter ([ADR-0005](0005-rg-enforcement-point.md)) runs against the
 union before anything is scored.
 
 **Pool sizing.** Serving needs roughly 40–50 items per user across the three placements
@@ -107,9 +108,11 @@ a concrete ID from another still collapses to one entry. Three rules govern the 
   ranking logic.
 - Retrieval contributes nothing to relevance ordering — that burden falls entirely on scoring
   ([ADR-0003](0003-ranking-model.md)) and ordering. At this catalog size that is the intended division of labour.
-- Accepted risk: heuristic sources can systematically miss cross-sport discovery (a football
-  user who would love darts). The segment-popularity source covers some of it; the rest is
-  deliberately deferred to the learned-retrieval revisit condition below.
+- Accepted risk: at v1 (before source 5 exists) the heuristic sources can systematically miss
+  cross-sport discovery — a football user who would love darts. Segment popularity covers some
+  of it; class-level EASE covers most of the rest from v2. What remains out of reach even then —
+  affinities with no co-engagement signal at the class level — is deferred to the two-tower
+  revisit condition below.
 
 ## Alternatives Considered
 
@@ -132,5 +135,14 @@ a concrete ID from another still collapses to one entry. Three rules govern the 
   class-level EASE source (source 5) does.
 - **Score everything, skip retrieval entirely.** Seriously considered — the catalog is small
   enough. Rejected on cost discipline: scoring 10–20k items per user per build multiplies batch
-  compute roughly 20–40x over a ~500-item pool for little gain, since the four sources already
-  capture where engagement concentrates. The blend is kept precisely because it is nearly free.
+  compute roughly 20–40x over a ~500-item pool for little gain, since the blend's sources
+  already capture where engagement concentrates. The blend is kept precisely because it is
+  nearly free.
+
+## References
+
+- Amatriain, *Blueprints for Recommender System Architectures: 10th Anniversary Edition* —
+  <https://amatria.in/blog/RecsysArchitectures> (candidate selection as optional at small
+  catalog scale)
+- Steck, *Embarrassingly Shallow Autoencoders for Sparse Data* (EASE) —
+  <https://arxiv.org/abs/1905.03375> (the class-affinity model behind source 5)

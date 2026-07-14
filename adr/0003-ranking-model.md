@@ -87,10 +87,11 @@ pointwise, calibrated P(engage | user, item, placement, context), introduced at 
   | Organic engagement (bets and slips reached via search or browse) | **Features and retrieval**: the user-stable affinity aggregates ([ADR-0004](0004-feature-store-contract.md)) are built from it, and class-level EASE ([ADR-0002](0002-candidate-generation.md)) trains on its co-engagement | It is strong preference evidence, but it has no logged propensity — exposure came from the user and the operator's UI, not from any policy we control — so it cannot support counterfactual evaluation, and it carries the sportsbook UI's own exposure bias (search ranking, default sorts). Feeding it in as features uses the evidence without contaminating the label distribution |
   | Recsys impressions — engaged and not engaged | **Label rows**: positives (slip-or-bet, bet-weighted) and the true negatives (shown, not engaged) | Every label row has position and propensity logged, so the entire training distribution supports counterfactual evaluation, and presentation bias is learnable rather than absorbed |
 
-  Impression volume makes this affordable: at roughly 1.2M requests per day and ~40 items per
-  response, v1 accumulates a v2-sized impression log in days — which is precisely what v1 is
-  for. One attribution rule prevents double counting: an item recommended in the current
-  session and then engaged is recsys-attributed; anything else is organic.
+  Impression volume makes this affordable: at roughly 1.2M requests per day, each serving one
+  placement of 10–20 items, v1 accumulates 12–24M impressions per day — a v2-sized training log
+  within days, which is precisely what v1 is for. One attribution rule prevents double
+  counting: an item recommended in the current session and then engaged is recsys-attributed;
+  anything else is organic.
 - **Negatives.** Impressed-but-not-engaged items, at roughly 100:1 easy-to-hard mix
   (the hard-negative adoption, TASKS.md §5c), with position logged and included as a training
   feature so presentation bias is learned rather than absorbed into relevance.

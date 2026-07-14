@@ -14,7 +14,7 @@ The design document is the main deliverable. Everything else supports it.
 |---|---|
 | [design.md](design.md) | **The design document** — architecture, roadmap, modelling, RG, evaluation |
 | [TASKS.md](TASKS.md) | The working document behind the design: requirements, assumptions (sourced), decision sequence, research adoptions and the "Bin" of rejected ideas |
-| [adr/](adr/) | Architecture Decision Records for the seven key decisions |
+| [adr/](adr/) | Architecture Decision Records — ten decisions, indexed in [adr/README.md](adr/README.md) |
 | [stubs/](stubs/) | Code stubs that illustrate the design (itemset schema, feature contract, ranker signature, request flow) |
 | [assessment/](assessment/) | The original brief |
 | [sessions/](sessions/) | How AI agents were used: curated narrative + raw tool-call log |

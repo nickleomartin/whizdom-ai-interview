@@ -136,8 +136,8 @@ Design must reflect these, not generic "RG filters":
 - Recsys ≤5% of infra → **~€19k/month platform-wide ≈ €2k/tenant/month**
 
 **Bottom-up unit sanity check (state in [ADR-0007](adr/0007-cost-model.md)):**
-- Assume 50k MAU/tenant × ~50 rec requests/user/month → ~25M requests/month platform-wide
-- Budget allows **~€0.75 per 1k requests**; KV lookup + CPU GBDT re-rank ≈ €0.05–0.20/1k → fits with 4–10x headroom
+- ~36M requests/month platform-wide — same derivation as the §1 throughput estimate (~1.2M/day)
+- Budget allows **~€0.55 per 1k requests**; KV lookup + CPU GBDT re-rank ≈ €0.05–0.20/1k → fits with 3–10x headroom
 - GPU deep-model serving ≈ 10–50x that unit cost → **ruled out for v1–v2**; revisit at v3 only if experiments justify
 - [ ] Peak load: Saturday football ~10x average request rate — size for peak, cost for average (autoscale/cache)
 

@@ -37,9 +37,8 @@ design has to respect:
    T?" The system must be able to answer that question precisely, after the fact.
 
 A single filtering stage cannot serve both speeds well, and Amatriain's critique of the
-four-stage blueprint ([Blueprints for Recommender Systems](https://amatria.in/blog/RecsysArchitectures))
-makes the same point: different kinds of filtering logic belong at different points in the
-pipeline.
+four-stage blueprint (see References) makes the same point: different kinds of filtering logic
+belong at different points in the pipeline.
 
 One boundary note: self-exclusion registries (GAMSTOP in the UK, OASIS in Germany, Spelpaus in
 Sweden, CRUKS in the Netherlands) are checked by the platform before a user can play at all. An
@@ -110,3 +109,10 @@ is decided entirely outside its objective function.
 - **Filter at every stage (three or more points).** Rejected: more choke points mean more audit
   surface without new capability. Two points already cover both speeds of rule change and all
   three levels of granularity.
+
+## References
+
+- Amatriain, *Blueprints for Recommender System Architectures: 10th Anniversary Edition* —
+  <https://amatria.in/blog/RecsysArchitectures> (the critique of single-point filtering)
+- Regulatory grounding with per-jurisdiction sources: TASKS.md §2, "RG / jurisdiction
+  regulatory grounding"

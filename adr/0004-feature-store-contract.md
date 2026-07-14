@@ -42,7 +42,7 @@ events listed here:
 | Bet-slip add / remove | User activity stream | User stable, user session | Medium intent; slip-without-bet is a useful negative |
 | Bet placed | User activity stream | User stable, user session | The strongest signal; stake and odds band retained as features |
 | Cash-out | User activity stream | User stable | Risk-appetite signal; also an RG-relevant behaviour |
-| Session start / heartbeat | User activity stream | User session | Session boundaries, dwell |
+| Session start / heartbeat | User activity stream | User session; also nearline recompute targeting from v3 ([ADR-0001](0001-offline-nearline-online-composition.md)) | Session boundaries, dwell. The v3 targeting use is operational (a recompute-priority signal), not a model feature — the user-session *feature group* still arrives only at v4 |
 | Odds update | Market data stream | Validity KV, item & class (v3+) | Sub-second bursts in play; consumed as state, not stored per tick |
 | Market status change (open/suspend/settle/create) | Market data stream | Validity KV, nearline triggers (v3) | Drives slot resolution and invalidation |
 | **Impression** (recommendation shown) | **Recsys-owned** | Training labels, propensity log | Logged with position, feature values, and propensity (contract rule 3) |

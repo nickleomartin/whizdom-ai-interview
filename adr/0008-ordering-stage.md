@@ -28,7 +28,9 @@ The composition rules, each with its purpose:
 
 1. **Utility base.** Items are ordered by calibrated expected engagement ([ADR-0003](0003-ranking-model.md)); when a
    retention head exists, the utility is a weighted combination with weights in configuration —
-   inspectable and changeable without retraining.
+   inspectable and changeable without retraining. At v1, before any model exists, the utility
+   base is the blend's own popularity and affinity scores ([ADR-0003](0003-ranking-model.md)'s
+   stated v1 behaviour) — the composition rules below apply unchanged from day one.
 2. **Diversity caps.** At most N items per fixture, league, and market type per placement list. Prevents
    one hot match from monopolising a placement.
 3. **Calibration to the user's own mix** (the Netflix calibrated-recommendations pattern,

@@ -10,12 +10,9 @@ Terms used here (GGR, rev-share, tier) are defined in the [glossary](../GLOSSARY
 Real-time recommendation serving is expensive, and this platform's economics are bounded. It is a
 B2B provider whose roughly ten mid-size tenants (each around €1–5M GGR per month) pay revenue
 share rather than enterprise licence fees. Market benchmarks put managed B2B sportsbook pricing
-at 8–12% of operator GGR
-([sporbetsoft](https://sporbetsoft.com/articles/managed-b2b-sportsbook-vs-turnkey/),
-[track360](https://track360.io/blog/sportsbook-platform-providers-vendor-comparison-kambi-altenar-betby-2026)),
-and operators tend to migrate to fixed licensing at around $20–30M of annual GGR
-([nowg](https://www.nowg.net/sports-betting-b2b-solution-guide/)). Our assumed tenants sit below
-that threshold: revenue-share customers, cost-sensitive.
+at 8–12% of operator GGR, and operators tend to migrate to fixed licensing at around $20–30M of
+annual GGR (see References). Our assumed tenants sit below that threshold: revenue-share
+customers, cost-sensitive.
 
 Without a stated cost ceiling, architecture debates default to "fresher is better" and the design
 drifts toward expensive request-time inference. A ceiling turns the offline-heavy choice into a
@@ -35,11 +32,12 @@ Adopt a two-sided cost model as a binding constraint on every serving-tier decis
 
 **From the bottom up — what serving actually costs:**
 
-- Around 25 million recommendation requests per month are expected (50k monthly active users per
-  tenant, about 50 requests per user per month, ten tenants).
-- The budget therefore allows roughly **€0.75 per thousand requests**.
+- Around 36 million recommendation requests per month are expected — the throughput estimate
+  in TASKS.md §1 (roughly 1.2 million requests per day, which is also where the 14
+  requests-per-second average below comes from).
+- The budget therefore allows roughly **€0.55 per thousand requests**.
 - A key-value lookup plus a CPU-based ranking model costs in the region of €0.05–0.20 per
-  thousand requests — it fits with four to ten times headroom.
+  thousand requests — it fits with three to ten times headroom.
 - GPU-served deep models cost ten to fifty times more per request. They do not fit.
 
 **What this binds (the consequences other ADRs inherit):**
@@ -75,3 +73,12 @@ Adopt a two-sided cost model as a binding constraint on every serving-tier decis
   optimised GPU serving runs at ten times the CPU unit cost at our request rates, and utilisation
   would be poor at an average of 14 requests per second. Revisit only with experiment-proven need
   (a Bin entry with exactly that revisit condition exists).
+
+## References
+
+- Managed B2B sportsbook pricing benchmarks (8–12% of GGR):
+  <https://sporbetsoft.com/articles/managed-b2b-sportsbook-vs-turnkey/> and
+  <https://track360.io/blog/sportsbook-platform-providers-vendor-comparison-kambi-altenar-betby-2026>
+- The rev-share-to-licence migration threshold (~$20–30M annual GGR):
+  <https://www.nowg.net/sports-betting-b2b-solution-guide/>
+- Full pricing research with additional sources: TASKS.md §2, "Cost assumptions"

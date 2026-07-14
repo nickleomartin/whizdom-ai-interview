@@ -21,9 +21,9 @@ signal is actually two different things with different economics:
 
 A two-tier design (batch plus request-time) has to push both kinds of freshness through the
 expensive request-time path, or serve neither. The Netflix three-tier blueprint — offline,
-nearline, online, described in [Amatriain's blueprint retrospective](https://amatria.in/blog/RecsysArchitectures)
-— matches the two-way split exactly. The cost ceiling from [ADR-0007](0007-cost-model.md) (about €0.75 per thousand
-requests) is a binding input to this decision.
+nearline, online (see References) — matches the two-way split exactly. The cost ceiling from
+[ADR-0007](0007-cost-model.md) (about €0.55 per thousand requests) is a binding input to this
+decision.
 
 ## Decision
 
@@ -41,9 +41,10 @@ escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md �
    Serving is untouched: it remains a lookup, so nearline adds freshness without adding any
    request-time compute.
 
-3. **Online (request-time).** Always runs the final gate — a key-value check, not model
-   inference, present from v1. From v4 it may additionally re-rank the itemset using session
-   features, within a 30ms compute budget.
+3. **Online (request-time).** Always runs the final gate — cheap rule-and-lookup evaluation
+   (validity lookups plus rule-pack checks, [ADR-0005](0005-rg-enforcement-point.md)), never
+   model inference — present from v1. From v4 it may additionally re-rank the itemset using
+   session features, within a 30ms compute budget.
 
 **The composition contract.** Serving consumes the freshest available itemset (the nearline
 refresh if one exists, otherwise the last batch build), applies the final gate, and may re-order
@@ -60,6 +61,13 @@ rebuild just those itemsets within about a minute. The rebuild runs the same sta
 offline batch job (retrieval blend, eligibility pre-filter, scoring, ordering), scoped to the
 affected users instead of everyone. Serving is untouched: requests still just look up an itemset
 — they simply find a fresher one.
+
+**What a v3 rebuild actually changes.** Live odds do not become scoring features until v4
+([ADR-0004](0004-feature-store-contract.md)), so a nearline re-score at v3 changes through two
+channels only: the candidate set itself (suspended items dropped, newly opened slots picked up)
+and the nearline-refreshed item and class aggregates the model already consumes. The model
+artifact is identical; its inputs are fresher. This is deliberate — v3 buys freshness without
+touching the feature contract's tier boundaries.
 
 **Event coalescing.** One goal produces a burst of correlated events (dozens of market
 suspensions and recreations on the same fixture). Workers debounce per fixture: the burst
@@ -125,3 +133,9 @@ precomputed for anyone else. That is the entire case for nearline as its own roa
 - **Streaming full recompute: re-rank every user on every event.** Rejected: on a busy Saturday
   the worst case approaches all-users × all-markets. Nearline's affected-users targeting is the
   bounded version of the same idea.
+
+## References
+
+- Amatriain, *Blueprints for Recommender System Architectures: 10th Anniversary Edition* —
+  <https://amatria.in/blog/RecsysArchitectures> (the Netflix three-tier blueprint this ADR
+  adapts)
