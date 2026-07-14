@@ -139,37 +139,55 @@ carries the translation table mapping each topic to its owning decision records.
 
 ```mermaid
 flowchart TB
-    APP["Operator application<br/>(tenant front-end — the caller)"]
-    ES["Event streams<br/>(odds, market status, user activity)"]
-    WH["Warehouse<br/>(history, aggregates, impression logs)"]
-    VKV["Validity KV<br/>(≤5s lag)"]
-    NL["Nearline workers (v3+)<br/>coalesce → target → rebuild<br/>(all four stages)"]
-    OFF["Offline hourly batch<br/>retrieve → pre-filter → score (v2+) → order"]
-    STORE[("Itemset store (KV)")]
-    SERVE["Online serve path (P99 ≤ 100ms)<br/>context → lookup → COMPLIANCE GATE (fail-closed)<br/>→ re-rank (v4, ≤30ms) → compose"]
-    PL["Placements:<br/>carousel · in-play sidebar · post-bet"]
-    LOG["Impressions + suppressions<br/>(async, off the critical path)"]
+    subgraph SRC["SOURCES"]
+        direction LR
+        ES["Event streams<br/>odds · market status · activity"]
+        WH["Warehouse<br/>history · aggregates · logs"]
+    end
 
-    APP -->|user activity| ES
-    APP -->|"request: tenant · placement · user"| SERVE
+    subgraph BUILD["BUILD — offline + nearline, off the request path"]
+        direction LR
+        OFF["Offline hourly batch<br/>retrieve → pre-filter → score (v2+) → order"]
+        NL["Nearline workers (v3+)<br/>coalesce → target → rebuild — all four stages"]
+    end
+
+    STORE[("Itemset store (KV)")]
+
+    subgraph ON["ONLINE — request path, P99 ≤ 100ms"]
+        direction LR
+        VKV["Validity KV<br/>≤5s lag"]
+        SERVE["Serve path<br/>context → lookup → COMPLIANCE GATE<br/>(fail-closed) → re-rank (v4) → compose"]
+    end
+
+    subgraph OP["OPERATOR — application layer"]
+        direction LR
+        APP["Operator application<br/>tenant front-end — the caller"]
+        PL["Placements<br/>carousel · sidebar · post-bet"]
+    end
+
+    WH -->|build + training inputs| OFF
+    ES -->|triggers, v3| NL
     ES -->|validity feed| VKV
-    ES -->|nearline triggers, v3| NL
-    WH -->|training + build inputs| OFF
     OFF <-.->|same stage logic| NL
     OFF -->|write| STORE
     NL -->|write| STORE
-    STORE -->|lookup, freshest available| SERVE
+    STORE -->|lookup, freshest| SERVE
     VKV -->|gate + slot resolution| SERVE
+    APP -->|"request: tenant · placement · user"| SERVE
     SERVE -->|response| PL
-    SERVE --> LOG
-    LOG -->|the flywheel| WH
+    APP -.->|user activity| ES
+    SERVE -.->|"impressions + suppressions — the flywheel"| WH
 
-    style APP fill:#eef1f4,stroke:#5a6b7a
-    style SERVE fill:#f5e6e6,stroke:#c0392b
-    style VKV fill:#e8f0f8,stroke:#2c5f8a
-    style NL fill:#e6f2e6,stroke:#27713f
-    style OFF fill:#e6f2e6,stroke:#27713f
-    style STORE fill:#fdf6e3,stroke:#8a6d3b
+    classDef built fill:#e6f2e6,stroke:#27713f,color:#0b1015
+    classDef online fill:#f5e6e6,stroke:#c0392b,color:#0b1015
+    classDef kv fill:#e8f0f8,stroke:#2c5f8a,color:#0b1015
+    classDef stor fill:#fdf6e3,stroke:#8a6d3b,color:#0b1015
+    classDef op fill:#eef1f4,stroke:#5a6b7a,color:#0b1015
+    class OFF,NL built
+    class SERVE online
+    class VKV kv
+    class STORE stor
+    class APP,PL op
 ```
 
 Serving is always a lookup plus the compliance gate, at every version. The online tier never
