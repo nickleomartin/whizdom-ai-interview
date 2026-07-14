@@ -8,6 +8,18 @@ iGaming sportsbook platform, with offline (batch), nearline (event-triggered), a
 
 The design document is the main deliverable. Everything else supports it.
 
+## Explore the design interactively
+
+- **[Design Explorer](https://nickleomartin.github.io/whizdom-ai-interview/)** — clickable
+  architecture schematic with per-module config surfaces, the v1→v4 roadmap morph, the
+  invalidation-storm demo, and a follow-one-request trace with live rule-ID suppressions
+- **[Sportsbook UI simulation](https://nickleomartin.github.io/whizdom-ai-interview/prototype/)** —
+  the full prototype: placements, personas, RG gating, real-time odds simulation, x-ray debug views
+
+Both are summaries with deep links back to the canonical markdown; sources live in
+[`explorer/`](explorer/) and [`prototype/`](prototype/). (Requires GitHub Pages enabled:
+Settings → Pages → Source: GitHub Actions.)
+
 ## Repository map
 
 | Path | What it is |

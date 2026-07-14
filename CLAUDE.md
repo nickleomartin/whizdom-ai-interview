@@ -59,6 +59,22 @@ is explicitly not worth more than code that clearly conveys the design (per the 
   `sessions/raw/tool-calls.jsonl`. Leave it in place; the curated narrative goes in
   `sessions/*.md`.
 
+## explorer/ — interactive design explorer
+
+`explorer/` is a standalone client-side React app (same conventions as `prototype/`: Vite + TS,
+React + ReactDOM only, vanilla CSS) presenting the design interactively: the architecture
+schematic with per-module config drawers, the v1→v4 version morph, the invalidation-storm demo,
+and a follow-one-request trace. Deployed to GitHub Pages by `.github/workflows/pages.yml`
+(explorer at the site root, prototype under `/prototype/`).
+
+- Validate with: `cd explorer && npm run build` (type-check + bundle).
+- Runtime deps are React + ReactDOM only — do not add libraries; all diagrams are hand-rolled SVG.
+- **Anti-drift rule**: all module copy lives in `explorer/src/content/modules.ts` and is a
+  summary of the ADRs — edit the ADR first, then the content file. Every drawer deep-links to
+  its canonical markdown.
+- Synthetic data only; the RG hard-gate guardrail applies here too — a suppressed item must
+  never render as bettable (ghost display without an odds control, x-ray or not).
+
 ## prototype/ — UX exploration artifact
 
 `prototype/` is a client-side React app illustrating the design's serving behaviour
