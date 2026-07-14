@@ -4,6 +4,25 @@ The main deliverable. Decisions are recorded in ten ADRs ([index](adr/README.md)
 document is the narrative synthesis. Coined terms are defined in the [glossary](GLOSSARY.md);
 the working document behind everything is [TASKS.md](TASKS.md).
 
+**Contents:**
+[1 Why this design](#1-why-this-design) ·
+[2 Requirements & assumptions](#2-requirements--assumptions) ·
+[3 Mental model](#3-mental-model--what-we-are-modelling) ·
+[4 Organizing framework](#4-organizing-framework) ·
+[5 Architecture](#5-architecture-overview) ·
+[6 Roadmap](#6-evolution-roadmap-v1--v4) ·
+[7 Offline](#7-offline-path) ·
+[8 Nearline](#8-nearline-path) ·
+[9 Online](#9-online-path) ·
+[10 Composition](#10-composition--how-the-tiers-work-together) ·
+[11 Modelling](#11-modelling-choices) ·
+[12 Multi-tenancy](#12-multi-tenancy) ·
+[13 RG & eligibility](#13-responsible-gambling--eligibility) ·
+[14 Evaluation](#14-evaluation) ·
+[15 The Bin](#15-considered-but-not-built--the-bin) ·
+[16 AI agents](#16-how-i-used-ai-agents) ·
+[17 Scoped out](#17-scoped-out--next-steps)
+
 ## 1. Why This Design
 
 The single biggest decision is to split "freshness" into two different problems and refuse to
@@ -29,6 +48,8 @@ engagement, v3 and v4 never get built and the design stops at a much cheaper sys
 the point of gating every escalation on evidence.
 
 ## 2. Requirements & Assumptions
+
+**In one line:** ten cost-sensitive tenants, ~14 rps average with 10–20x event-driven peaks, a €19k/month ceiling, and placement-level regulatory constraints — these numbers shape every decision below.
 
 **Functional.** Recommend relevant items per user across three placements (homepage carousel,
 in-play sidebar, post-bet suggestions). Items span six types — events, markets, selections,
@@ -76,6 +97,8 @@ adopted pending compliance review.
 
 ## 3. Mental Model — What We Are Modelling
 
+**In one line:** behaviour splits into layers by how fast it changes and who it belongs to; each layer is served by the cheapest tier that can.
+
 Sportsbook user behaviour decomposes into layers, each with a
 cheapest-infrastructure-that-serves-it answer. The core modelling target is
 **P(engage | user, item, placement, context)**, shaped by a utility that respects RG
@@ -96,6 +119,8 @@ suspended market surfaced to a user).
 
 ## 4. Organizing Framework
 
+**In one line:** four stages say *what* the work is, three tiers say *where* it runs — every component has a grid address.
+
 The design is decomposed on a two-axis grid ([ADR-0000](adr/0000-organizing-framework.md)):
 **four stages** say what the work is — Retrieval → Filtering → Scoring → Ordering (the NVIDIA
 Merlin pattern, with Amatriain's amendment that filtering runs at two points) — and **three
@@ -106,33 +131,37 @@ carries the translation table mapping each topic to its owning decision records.
 
 ## 5. Architecture Overview
 
-```
-  EVENT STREAMS                                        WAREHOUSE
-  (odds, market status, user activity)                 (history, aggregates, impression logs)
-      │                                                     │
-      │ validity feed        nearline triggers (v3)         │ training + build inputs
-      ▼                           │                         ▼
- ┌────────────┐          ┌────────┴─────────┐  same   ┌─────────────────────────┐
- │ VALIDITY KV│          │ NEARLINE workers │  stage  │ OFFLINE hourly batch     │
- │  (≤5s lag) │          │ coalesce → target│  logic  │ retrieval blend →        │
- └─────┬──────┘          │ → rebuild        │◄───────►│ eligibility pre-filter → │
-       │                 └────────┬─────────┘         │ scoring (v2+) → ordering │
-       │                          │ write             └────────────┬─────────────┘
-       │                          ▼                                │ write
-       │                 ┌─────────────────────────────────────────▼───┐
-       │                 │              ITEMSET STORE (KV)             │
-       │                 └───────────────────┬─────────────────────────┘
-       │                                     │ lookup (freshest available)
-       │            ┌────────────────────────▼────────────────────────┐
-       └───────────►│ ONLINE serve path (P99 ≤ 100ms)                 │
-   gate + slot      │ resolve context → fetch itemset →               │
-   resolution       │ COMPLIANCE GATE (fail-closed) →                 │
-                    │ re-rank (v4 only, ≤30ms, fallback) →            │
-                    │ compose → respond                               │
-                    └───────┬─────────────────────────┬───────────────┘
-                            ▼                         ▼
-              placements: carousel /        impressions + suppressions
-              in-play sidebar / post-bet    (async) → warehouse — the flywheel
+**In one line:** build itemsets off the request path, serve them as lookups, gate everything at the door.
+
+```mermaid
+flowchart TB
+    ES["Event streams<br/>(odds, market status, user activity)"]
+    WH["Warehouse<br/>(history, aggregates, impression logs)"]
+    VKV["Validity KV<br/>(≤5s lag)"]
+    NL["Nearline workers (v3+)<br/>coalesce → target → rebuild"]
+    OFF["Offline hourly batch<br/>retrieve → pre-filter → score (v2+) → order"]
+    STORE[("Itemset store (KV)")]
+    SERVE["Online serve path (P99 ≤ 100ms)<br/>context → lookup → COMPLIANCE GATE (fail-closed)<br/>→ re-rank (v4, ≤30ms) → compose"]
+    PL["Placements:<br/>carousel · in-play sidebar · post-bet"]
+    LOG["Impressions + suppressions<br/>(async, off the critical path)"]
+
+    ES -->|validity feed| VKV
+    ES -->|nearline triggers, v3| NL
+    WH -->|training + build inputs| OFF
+    OFF <-.->|same stage logic| NL
+    OFF -->|write| STORE
+    NL -->|write| STORE
+    STORE -->|lookup, freshest available| SERVE
+    VKV -->|gate + slot resolution| SERVE
+    SERVE --> PL
+    SERVE --> LOG
+    LOG -->|the flywheel| WH
+
+    style SERVE fill:#f5e6e6,stroke:#c0392b
+    style VKV fill:#e8f0f8,stroke:#2c5f8a
+    style NL fill:#e6f2e6,stroke:#27713f
+    style OFF fill:#e6f2e6,stroke:#27713f
+    style STORE fill:#fdf6e3,stroke:#8a6d3b
 ```
 
 Serving is always a lookup plus the compliance gate, at every version. The online tier never
@@ -141,6 +170,8 @@ itemset → stale itemset (flagged) → segment-popularity default — every ste
 gate; the gate itself is the one component that fails closed rather than degrading.
 
 ## 6. Evolution Roadmap (v1 → v4)
+
+**In one line:** four versions; each escalation is built only after evidence that the previous version's staleness actually costs engagement.
 
 The delivery strategy, not a one-shot end state: freshness escalates in cost order — batch →
 nearline → online — and each escalation must pass an experiment gate showing the previous
@@ -170,24 +201,32 @@ incremental, matching proven value (data-source matrix in [TASKS.md §7](TASKS.m
 
 ## 7. Offline Path
 
+**In one line:** the hourly batch runs all four stages and stores versioned, slot-based itemsets; flagging staleness and enforcing validity are deliberately separate jobs.
+
 The hourly batch (v1 may start nightly) builds itemsets per user or segment, running all four
-stages: the retrieval blend assembles 400–600 unique candidates from named sources (user
-affinity, segment popularity, starting-soon/live slots, tenant promotions, and from v2 the EASE
-class-affinity source) with de-duplication on a canonical key, kept provenance, and a
-merge-proof promotional tag ([ADR-0002](adr/0002-candidate-generation.md)); the eligibility
-pre-filter applies slow-moving rule packs before anything is scored
-([ADR-0005](adr/0005-rg-enforcement-point.md)); scoring applies the calibrated GBDT (v2+,
-[ADR-0003](adr/0003-ranking-model.md)); ordering composes the final list under six explicit
-rules ([ADR-0008](adr/0008-ordering-stage.md)). The stored artifact — shape in
-[stubs/itemset.py](stubs/itemset.py) — records the model, feature-set, and rule-pack versions
-it was built under, making every served recommendation reproducible. Short-lived market classes
-are stored as **slots** (fixture × market type) late-bound to live market IDs at serve, so
-batch builds survive the goal-cycle ID churn. Staleness is handled by division of labour: the
-TTL only *flags* stale itemsets; validity is the gate's job on every request, and the batch job
-fails closed on evaluation-metric regression (stale itemsets keep serving rather than a bad
-build going live).
+stages in sequence:
+
+- **Retrieval** assembles 400–600 unique candidates from named sources — user affinity, segment
+  popularity, starting-soon/live slots, tenant promotions, and from v2 the EASE class-affinity
+  source — de-duplicated on a canonical key with kept provenance and a merge-proof promotional
+  tag ([ADR-0002](adr/0002-candidate-generation.md)).
+- **The eligibility pre-filter** applies slow-moving rule packs before anything is scored
+  ([ADR-0005](adr/0005-rg-enforcement-point.md)) — never spending compute on what may never be shown.
+- **Scoring** applies the calibrated GBDT from v2 ([ADR-0003](adr/0003-ranking-model.md)).
+- **Ordering** composes the final list under six explicit rules ([ADR-0008](adr/0008-ordering-stage.md)).
+
+**The stored artifact** ([stubs/itemset.py](stubs/itemset.py)) records the model, feature-set,
+and rule-pack versions it was built under, making every served recommendation reproducible.
+Short-lived market classes are stored as **slots** (fixture × market type) late-bound to live
+market IDs at serve, so batch builds survive the goal-cycle ID churn.
+
+**Staleness is a division of labour**: the TTL only *flags* stale itemsets; validity is the
+gate's job on every request; and the batch job fails closed on evaluation-metric regression —
+stale itemsets keep serving rather than a bad build going live.
 
 ## 8. Nearline Path
+
+**In one line:** one market event recomputes many users' itemsets once, off the request path — with a priority policy that keeps Saturday storms survivable.
 
 The middle tier, arriving at v3 ([ADR-0001](adr/0001-offline-nearline-online-composition.md);
 contract in [stubs/nearline_refresh.py](stubs/nearline_refresh.py)). A market event — goal,
@@ -221,17 +260,27 @@ because the match got exciting.
 
 ## 9. Online Path
 
-The serve path (flow in [stubs/serve_path.py](stubs/serve_path.py)), P99 ≤ 100ms: resolve user
-context (jurisdiction, consent, RG tier — consumed, not derived) → fetch the freshest itemset →
-**compliance gate** (validity at ≤5s lag, slot resolution, live RG signals, rule-pack version
-drift check; fail-closed; every suppression logged with rule ID —
-[stubs/compliance_gate.py](stubs/compliance_gate.py)) → optional v4 re-rank with session
-features under a hard 30ms budget with fallback to the gated order
-([stubs/online_reranker.py](stubs/online_reranker.py)) → compose → respond, logging the
-impression with exact feature values, position, and propensity, asynchronously. That impression
-log *is* the training set and the counterfactual-evaluation input — the system's flywheel.
+**In one line:** serving is a lookup, a fail-closed compliance gate, and (from v4) a budget-boxed re-rank — logging every impression it serves.
+
+The serve path ([stubs/serve_path.py](stubs/serve_path.py)) runs six steps inside the P99 ≤
+100ms budget:
+
+1. **Resolve user context** — jurisdiction, consent flags, RG tier; all consumed from platform
+   services, none derived here.
+2. **Fetch the freshest itemset** — the nearline refresh if one exists, otherwise the last
+   batch build.
+3. **Compliance gate** ([stubs/compliance_gate.py](stubs/compliance_gate.py)) — market validity
+   at ≤5s lag, slot resolution, live RG signals, and a rule-pack version-drift check.
+   Fail-closed; every suppression logged with its rule ID.
+4. **Optional re-rank** (v4 only, [stubs/online_reranker.py](stubs/online_reranker.py)) —
+   session features under a hard 30ms budget, falling back to the gated order on breach.
+5. **Compose and respond.**
+6. **Log the impression** — exact feature values, position, and propensity, asynchronously.
+   That log *is* the training set and the counterfactual-evaluation input — the system's flywheel.
 
 ## 10. Composition — How the Tiers Work Together
+
+**In one line:** offline and nearline decide *what can* be recommended; online decides *whether it may* be shown right now and, from v4, *in what order* for this moment.
 
 The contract ([ADR-0001](adr/0001-offline-nearline-online-composition.md)): serving consumes
 the freshest available itemset, applies the gate, and may re-order within the gated set. The
@@ -243,6 +292,8 @@ be shown right now* (gate) and, from v4, *in what order for this moment* (re-ran
 behaviour is a stated chain with the compliance gate as the single fail-closed exception.
 
 ## 11. Modelling Choices
+
+**In one line:** deliberately light retrieval, one calibrated GBDT at every tier, impression-only labels, and an explicit forbidden-signals list.
 
 **Retrieval** ([ADR-0002](adr/0002-candidate-generation.md)): deliberately light — at 10–20k
 active markets, retrieval must justify existing before justifying being clever. Four heuristic
@@ -280,6 +331,8 @@ optimises for them.
 
 ## 12. Multi-Tenancy
 
+**In one line:** one pooled model, siloed data, tenant behaviour expressed as configuration.
+
 One pooled model, siloed data, tenant-aware features
 ([ADR-0006](adr/0006-multi-tenancy.md)). Raw interaction data stays in per-tenant warehouse
 namespaces; cross-tenant training is contractual opt-in; tenant-specific behaviour is expressed
@@ -291,6 +344,8 @@ non-goal for ten tenants, with a stated upgrade path (tenant features → per-te
 if a premium tier ever demands it.
 
 ## 13. Responsible Gambling & Eligibility
+
+**In one line:** two filter points matched to rule speed; the gate fails closed; the model is structurally unable to trade compliance for engagement.
 
 Two-point filtering ([ADR-0005](adr/0005-rg-enforcement-point.md)), speed-matched: the
 **eligibility pre-filter** applies slow-moving jurisdiction rule packs and RG-tier restrictions
@@ -305,6 +360,8 @@ model's objective — the model *cannot* trade compliance against engagement. Fa
 passes the same gate; there is no back door through degradation.
 
 ## 14. Evaluation
+
+**In one line:** success = conversion up *while* retention holds, guardrails flat, diversity intact — anything else fails, whatever the primary metric says.
 
 Owned by [ADR-0009](adr/0009-evaluation-and-feedback-loops.md) in full; the shape:
 
@@ -336,6 +393,8 @@ pool composition shares, per-tenant performance trends.
 
 ## 15. Considered But Not Built + The Bin
 
+**In one line:** the fashionable approaches were researched, costed, and binned with explicit revisit triggers — discernment is part of the deliverable.
+
 The offline/online contract, freshness handling, and pathology treatment above were designed
 but not implemented — per the brief. Beyond those, researched approaches were explicitly
 rejected or deferred, each with a reason and a revisit trigger (full table in
@@ -353,6 +412,8 @@ A Bin entry is not "bad idea" — it is "wrong for these constraints now", with 
 trigger. The discernment is part of the deliverable.
 
 ## 16. How I Used AI Agents
+
+**In one line:** the agent did research and drafting; the judgement calls — and ten logged corrections of the agent — were mine.
 
 Full curated log with the raw tool-call JSONL in [sessions/](sessions/); the honest summary:
 
@@ -381,6 +442,8 @@ style rule), a missing de-duplication policy whose fix surfaced a real RG edge c
 contradicting earlier ones.
 
 ## 17. Scoped Out & Next Steps
+
+**In one line:** what was deliberately left out, and the five things to do first with more time.
 
 **Deliberately not covered**: ingestion and stream infrastructure (assumed per the brief);
 search and any unified search-rec model (not our surface); casino cross-sell (regulatorily
