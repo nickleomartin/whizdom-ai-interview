@@ -684,3 +684,60 @@ h2.panel-title {
   color: var(--text-muted);
 }
 .foot a { color: var(--accent); }
+
+/* ── Stage legend + cross-tier highlight ─────────────────────────────── */
+
+.stage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--bg-raised);
+}
+.stage-legend-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+.stage-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-panel);
+  border: 1px solid var(--hairline-bright);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.stage-chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--chip);
+  align-self: center;
+}
+.stage-chip .note {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.stage-chip:hover, .stage-chip.active {
+  border-color: var(--chip);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--chip) 30%, transparent);
+}
+
+.node.stage-dimmed rect { opacity: 0.18; }
+.node.stage-dimmed text { opacity: 0.15; }
+.node.stage-lit rect { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15)); }

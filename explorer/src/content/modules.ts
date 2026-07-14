@@ -11,10 +11,14 @@ export interface ConfigItem {
   value: string
 }
 
+export type Stage = 'retrieval' | 'filtering' | 'scoring' | 'ordering'
+
 export interface ModuleDef {
   id: string
   title: string
   tier: Tier
+  /** Which of the four pipeline stages this module implements, if any. */
+  stage?: Stage
   arrivesAt: Version
   /** What it does — two or three sentences, plain language. */
   what: string
@@ -73,6 +77,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   retrieval: {
     id: 'retrieval',
+    stage: 'retrieval',
     title: 'Retrieval blend',
     tier: 'offline',
     arrivesAt: 1,
@@ -89,6 +94,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   ease: {
     id: 'ease',
+    stage: 'retrieval',
     title: 'EASE class affinity',
     tier: 'offline',
     arrivesAt: 2,
@@ -103,6 +109,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   prefilter: {
     id: 'prefilter',
+    stage: 'filtering',
     title: 'Eligibility pre-filter',
     tier: 'offline',
     arrivesAt: 1,
@@ -118,6 +125,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   scoring: {
     id: 'scoring',
+    stage: 'scoring',
     title: 'Scoring (GBDT)',
     tier: 'offline',
     arrivesAt: 2,
@@ -134,6 +142,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   ordering: {
     id: 'ordering',
+    stage: 'ordering',
     title: 'Ordering',
     tier: 'offline',
     arrivesAt: 1,
@@ -184,6 +193,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   gate: {
     id: 'gate',
+    stage: 'filtering',
     title: 'Compliance gate',
     tier: 'online',
     arrivesAt: 1,
@@ -200,6 +210,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   reranker: {
     id: 'reranker',
+    stage: 'scoring',
     title: 'Session re-ranker',
     tier: 'online',
     arrivesAt: 4,
