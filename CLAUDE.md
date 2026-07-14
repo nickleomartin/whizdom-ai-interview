@@ -50,3 +50,16 @@ is explicitly not worth more than code that clearly conveys the design (per the 
 - Session logging: `.claude/settings.json` has a PostToolUse hook appending to
   `sessions/raw/tool-calls.jsonl`. Leave it in place; the curated narrative goes in
   `sessions/*.md`.
+
+## prototype/ — UX exploration artifact
+
+`prototype/` is a client-side React app illustrating the design's serving behaviour
+(placements, real-time dynamics, personas, RG gating, v1/v3/v4 contrast). It is a UX
+exploration artifact, NOT an implementation of the pipeline — the brief's "no runnable
+pipeline" guidance refers to the ML pipeline, which this does not contain.
+
+- Validate with: `cd prototype && npm run build` (type-check + bundle).
+- Runtime deps are React + ReactDOM only — do not add libraries.
+- Synthetic data only; the RG hard-gate guardrail applies to prototype UI too: a
+  suppressed item must never render as bettable (x-ray ghost display only).
+- Spec: `docs/superpowers/specs/2026-07-14-recsys-ui-prototype-design.md`.
