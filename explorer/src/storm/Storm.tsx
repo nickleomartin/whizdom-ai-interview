@@ -36,11 +36,19 @@ export function Storm() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [done, setDone] = useState({ active: 0, recent: 0 })
   const [chart, setChart] = useState<ChartPoint[]>(() =>
-    Array.from({ length: 40 }, () => ({ serve: baseServe(), counterfactual: baseServe() }))
+    Array.from({ length: 40 }, () => ({
+      serve: 3 + Math.random() * 2,
+      counterfactual: 55 + Math.random() * 8,
+    }))
   )
   const stormTicks = useRef(0)
 
-  // chart ticker — always running so the flat line visibly *stays* flat during storms
+  // chart ticker — an honest cost model:
+  //  · counterfactual re-ranks EVERY request, so it is expensive at baseline and
+  //    spikes during the refresh storm (reads and events peak together)
+  //  · this design pays near-zero at baseline (serving is lookups); during a storm
+  //    the nearline workers re-score affected users — a bump that is FLAT-TOPPED
+  //    because the bounded worker budget caps it, then back to near-zero
   useEffect(() => {
     const t = setInterval(() => {
       const storming = stormTicks.current > 0
@@ -48,8 +56,10 @@ export function Storm() {
       setChart((c) => [
         ...c.slice(1),
         {
-          serve: baseServe(),
-          counterfactual: storming ? baseServe() * (7 + Math.random() * 5) : baseServe(),
+          serve: storming ? 38 + Math.random() * 4 : 3 + Math.random() * 2,
+          counterfactual: storming
+            ? 145 + Math.random() * 25
+            : 55 + Math.random() * 8,
         },
       ])
     }, 350)
@@ -146,20 +156,22 @@ export function Storm() {
             <LoadChart points={chart} />
             <div className="chart-legend">
               <span className="k">
-                <span className="swatch" style={{ background: 'var(--tier-offline)' }} /> serve-path
-                load (this design)
+                <span className="swatch" style={{ background: 'var(--tier-offline)' }} /> this
+                design — nearline, bounded budget
               </span>
               <span className="k">
                 <span className="swatch" style={{ background: 'var(--gate)' }} /> counterfactual:
-                per-request re-ranking
+                re-rank on every request
               </span>
             </div>
             <div className="storm-caption">
-              The stage logic is identical in both paths, so the comparison reduces to{' '}
-              <em>reads per user between market events</em> — about ten. Per-request re-ranking
-              recomputes an identical answer on every sidebar poll; per-event recomputation pays
-              once. Reads and events peak together: the goal that invalidates the itemsets also
-              triggers the refresh storm.{' '}
+              The counterfactual pays on <em>every request, all the time</em> — then spikes when
+              the goal lands, because reads and events peak together (the goal that invalidates
+              the itemsets also triggers the refresh storm). This design pays near-zero at
+              baseline (serving is lookups) and a <em>flat-topped</em> bump during the storm —
+              flat because the bounded worker budget caps it. The stage logic is identical in
+              both paths, so the gap reduces to <em>reads per user between market events</em> —
+              about ten.{' '}
               <a href={link.adr('0001-offline-nearline-online-composition.md')} target="_blank" rel="noreferrer">
                 ADR-0001: the arithmetic ↗
               </a>
