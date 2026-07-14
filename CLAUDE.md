@@ -20,7 +20,11 @@ This is a design exercise — there is no runnable pipeline, no real data, and n
 ## Conventions
 
 - Documents are Markdown; British English; sources cited inline as links.
+- **Writing style: concise but plain.** Full sentences, no compressed fragment chains. Every
+  coined or domain term is defined in `GLOSSARY.md` at first use — never introduce jargon
+  without adding it there. Documents must read cleanly to someone outside this session.
 - ADRs follow `adr/template.md`. One decision per file. Status transitions: Draft → Accepted.
+  Each ADR opens with a one-line pointer to the glossary terms it relies on.
 - Design reasoning lives in `design.md`/ADRs — stubs only carry what a schema/signature can express.
 - The working sequence is TASKS.md §4 — do not populate `design.md` sections out of order without reason.
 

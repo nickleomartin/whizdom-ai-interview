@@ -18,6 +18,7 @@ The design document is the main deliverable. Everything else supports it.
 | [stubs/](stubs/) | Code stubs that illustrate the design (itemset schema, feature contract, ranker signature, request flow) |
 | [assessment/](assessment/) | The original brief |
 | [sessions/](sessions/) | How AI agents were used: curated narrative + raw tool-call log |
+| [GLOSSARY.md](GLOSSARY.md) | Definitions of every coined term (itemset, slot, rule pack, tier, …) |
 | [CLAUDE.md](CLAUDE.md) | Agent conventions, guardrails, and how to validate the stubs |
 
 ## Validating the stubs
