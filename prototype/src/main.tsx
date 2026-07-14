@@ -5,6 +5,7 @@ import './styles/tokens.css'
 import './styles/skins.css'
 import './styles/app.css'
 import './styles/cards.css'
+import './styles/layout.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
