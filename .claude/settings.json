@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json, datetime, os; d = json.load(sys.stdin); root = os.environ.get('CLAUDE_PROJECT_DIR', '.'); os.makedirs(os.path.join(root, 'sessions', 'raw'), exist_ok=True); open(os.path.join(root, 'sessions', 'raw', 'tool-calls.jsonl'), 'a').write(json.dumps({'ts': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'tool': d.get('tool_name')}) + chr(10))\""
+          }
+        ]
+      }
+    ]
+  }
+}
