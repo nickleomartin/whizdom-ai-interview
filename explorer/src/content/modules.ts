@@ -230,6 +230,7 @@ export const MODULES: Record<string, ModuleDef> = {
   },
   serve: {
     id: 'serve',
+    stage: 'ordering',
     title: 'Serve path',
     tier: 'online',
     arrivesAt: 1,
