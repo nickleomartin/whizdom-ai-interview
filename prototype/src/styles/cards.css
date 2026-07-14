@@ -1,0 +1,125 @@
+.rec-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: var(--density);
+  box-shadow: var(--shadow);
+  min-width: 190px;
+  max-width: 230px;
+  flex: 0 0 auto;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.rec-card:hover { border-color: var(--accent-2); }
+.rec-card.compact { min-width: 0; max-width: none; width: 100%; }
+.rec-card.type-boost { border: 1px solid var(--promo); }
+
+.rec-title { font-weight: 700; margin: 2px 0; line-height: 1.25; }
+.rec-sub { color: var(--text-dim); font-size: 0.85em; margin-bottom: 4px; }
+
+.promo-banner {
+  background: var(--promo);
+  color: var(--promo-text);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius);
+  display: inline-block;
+  padding: 1px 6px;
+  margin-bottom: 4px;
+}
+
+.live-strip {
+  color: var(--live);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 50% { opacity: 0.25; } }
+
+.odds-row { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.legs { font-size: 0.8em; color: var(--text-dim); }
+
+.odds-btn {
+  background: var(--odds-bg);
+  color: var(--odds-text);
+  border: none;
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.6s;
+}
+.odds-btn:hover:not(:disabled) { outline: 1px solid var(--accent-2); }
+.odds-btn .odds-label { font-weight: 400; font-size: 11px; color: var(--text); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.odds-btn.compact { padding: 4px 6px; font-size: 11px; }
+.odds-btn.flash-up { background: var(--up); color: #fff; transition: none; }
+.odds-btn.flash-up .odds-label { color: #fff; }
+.odds-btn.flash-down { background: var(--down); color: #fff; transition: none; }
+.odds-btn.flash-down .odds-label { color: #fff; }
+.odds-btn.locked { opacity: 0.55; cursor: not-allowed; filter: grayscale(0.7); }
+.odds-btn s { opacity: 0.6; font-weight: 400; margin-right: 2px; }
+
+.card-locked { opacity: 0.85; }
+
+/* x-ray ghosts — suppressed items, debug view only, never interactive */
+.rec-card.ghost { border: 1px dashed var(--xray-block); background: transparent; }
+.rec-card.ghost .ghost-inner { opacity: 0.35; filter: grayscale(1); pointer-events: none; }
+.ghost-label {
+  font-family: var(--xray-font);
+  font-size: 10px;
+  color: var(--xray-block);
+  margin-bottom: 3px;
+}
+
+/* x-ray chips */
+.xray-chips {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-family: var(--xray-font);
+  position: relative;
+}
+.chip {
+  font-size: 9px;
+  border: 1px solid var(--xray-text);
+  color: var(--xray-text);
+  background: rgba(10, 14, 24, 0.75);
+  border-radius: 2px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+.chip.tier-offline { border-color: var(--xray-warn); color: var(--xray-warn); }
+.chip.tier-nearline { border-color: var(--xray-text); color: var(--xray-text); }
+.chip.tier-online { border-color: #7ab8ff; color: #7ab8ff; }
+.factor-pop {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  background: var(--xray-bg);
+  color: var(--xray-text);
+  border: 1px dashed var(--xray-text);
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.factor-note { margin-top: 4px; color: var(--xray-warn); }
