@@ -74,7 +74,7 @@ body {
   border-radius: 0 0 14px 14px;
   z-index: 60;
 }
-.phone-scroll { overflow-y: auto; flex: 1; }
+.phone-scroll { overflow-y: auto; flex: 1; padding: 30px 10px 10px; }
 .phone-tabs {
   display: flex;
   border-top: 1px solid var(--surface-2);
