@@ -77,4 +77,5 @@ export const BANDS = [
   { label: 'OFFLINE — hourly batch', x: 604, y: 122, w: 312, h: 210, color: 'var(--tier-offline)' },
   { label: 'NEARLINE — event-triggered (v3+)', x: 314, y: 162, w: 262, h: 142, color: 'var(--tier-nearline)' },
   { label: 'ONLINE — request path', x: 24, y: 442, w: 832, h: 120, color: 'var(--tier-online)' },
+  { label: 'OPERATOR — application layer', x: 24, y: 586, w: 640, h: 90, color: 'var(--text-muted)' },
 ]
