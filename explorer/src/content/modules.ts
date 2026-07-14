@@ -228,6 +228,19 @@ export const MODULES: Record<string, ModuleDef> = {
     adr: { id: 'ADR-0001', file: '0001-offline-nearline-online-composition.md' },
     stub: 'serve_path.py',
   },
+  app: {
+    id: 'app',
+    title: 'Operator application',
+    tier: 'out',
+    arrivesAt: 1,
+    what: 'The tenant sportsbook front-end (web and mobile). It calls the recommendation API when a placement renders — once for the homepage carousel, every 30–60 seconds for an open in-play sidebar, after each placed bet — and its user activity (views, slips, bets, heartbeats) is what feeds the event streams.',
+    why: 'This is a B2B system: the operator’s application is both the caller of the serve path and the origin of the behavioural signal — the loop starts and ends outside our boundary.',
+    config: [
+      { label: 'Request cadence', value: 'carousel on render · sidebar every 30–60s while open · post-bet on bet' },
+      { label: 'Tenant identity', value: 'every request carries tenant + placement + user context' },
+    ],
+    adr: { id: 'ADR-0006', file: '0006-multi-tenancy.md' },
+  },
   placements: {
     id: 'placements',
     title: 'Placements',

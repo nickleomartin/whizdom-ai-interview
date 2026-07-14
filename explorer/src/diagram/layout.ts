@@ -50,8 +50,9 @@ export const NODES: NodeBox[] = [
   { id: 'gate', x: 88, y: 470, w: 158, h: 74, sub: 'FAIL CLOSED' },
   { id: 'reranker', x: 660, y: 470, w: 180, h: 74, sub: '≤30ms · fallback to gated order' },
 
-  // out row
-  { id: 'placements', x: 300, y: 610, w: 300, h: 52, sub: 'carousel · sidebar · post-bet' },
+  // out row — the caller and what it renders
+  { id: 'app', x: 40, y: 610, w: 220, h: 52, sub: 'tenant front-end — calls the API' },
+  { id: 'placements', x: 340, y: 610, w: 300, h: 52, sub: 'carousel · sidebar · post-bet' },
 ]
 
 export const EDGES: EdgeDef[] = [
@@ -64,7 +65,9 @@ export const EDGES: EdgeDef[] = [
   { id: 'e-val-gate', from: 'validity', to: 'gate', d: 'M 135 246 L 152 470', label: 'gate + slot resolution', labelAt: [30, 360], kind: 'serve' },
   { id: 'e-gate-serve', from: 'gate', to: 'serve', d: 'M 246 507 L 300 507', kind: 'serve' },
   { id: 'e-serve-rr', from: 'serve', to: 'reranker', d: 'M 600 507 L 660 507', label: 'v4', labelAt: [622, 498], kind: 'serve', arrivesAt: 4 },
-  { id: 'e-serve-out', from: 'serve', to: 'placements', d: 'M 450 544 L 450 610', kind: 'serve' },
+  { id: 'e-app-serve', from: 'app', to: 'serve', d: 'M 185 610 C 220 585 260 560 310 544', label: 'request: tenant · placement · user', labelAt: [60, 585], kind: 'serve' },
+  { id: 'e-app-streams', from: 'app', to: 'streams', d: 'M 52 610 C 6 470 6 180 42 86', label: 'user activity', labelAt: [10, 350], kind: 'data' },
+  { id: 'e-serve-out', from: 'serve', to: 'placements', d: 'M 480 544 L 488 610', label: 'response', labelAt: [494, 584], kind: 'serve' },
   { id: 'e-flywheel', from: 'serve', to: 'warehouse', d: 'M 600 530 C 880 520 920 220 830 86', label: 'impressions + suppressions — the flywheel', labelAt: [700, 560], kind: 'data' },
 ]
 
