@@ -133,18 +133,25 @@ carries the translation table mapping each topic to its owning decision records.
 
 **In one line:** build itemsets off the request path, serve them as lookups, gate everything at the door.
 
+> **[Explore this schematic interactively →](https://nickleomartin.github.io/whizdom-ai-interview/)**
+> — clickable modules with config surfaces, the v1→v4 roadmap morph, the invalidation-storm
+> demo, and a per-persona request trace.
+
 ```mermaid
 flowchart TB
+    APP["Operator application<br/>(tenant front-end — the caller)"]
     ES["Event streams<br/>(odds, market status, user activity)"]
     WH["Warehouse<br/>(history, aggregates, impression logs)"]
     VKV["Validity KV<br/>(≤5s lag)"]
-    NL["Nearline workers (v3+)<br/>coalesce → target → rebuild"]
+    NL["Nearline workers (v3+)<br/>coalesce → target → rebuild<br/>(all four stages)"]
     OFF["Offline hourly batch<br/>retrieve → pre-filter → score (v2+) → order"]
     STORE[("Itemset store (KV)")]
     SERVE["Online serve path (P99 ≤ 100ms)<br/>context → lookup → COMPLIANCE GATE (fail-closed)<br/>→ re-rank (v4, ≤30ms) → compose"]
     PL["Placements:<br/>carousel · in-play sidebar · post-bet"]
     LOG["Impressions + suppressions<br/>(async, off the critical path)"]
 
+    APP -->|user activity| ES
+    APP -->|"request: tenant · placement · user"| SERVE
     ES -->|validity feed| VKV
     ES -->|nearline triggers, v3| NL
     WH -->|training + build inputs| OFF
@@ -153,10 +160,11 @@ flowchart TB
     NL -->|write| STORE
     STORE -->|lookup, freshest available| SERVE
     VKV -->|gate + slot resolution| SERVE
-    SERVE --> PL
+    SERVE -->|response| PL
     SERVE --> LOG
     LOG -->|the flywheel| WH
 
+    style APP fill:#eef1f4,stroke:#5a6b7a
     style SERVE fill:#f5e6e6,stroke:#c0392b
     style VKV fill:#e8f0f8,stroke:#2c5f8a
     style NL fill:#e6f2e6,stroke:#27713f
@@ -167,7 +175,9 @@ flowchart TB
 Serving is always a lookup plus the compliance gate, at every version. The online tier never
 generates candidates and never overrides the gate. Degrade chain: online re-rank → nearline
 itemset → stale itemset (flagged) → segment-popularity default — every step still passing the
-gate; the gate itself is the one component that fails closed rather than degrading.
+gate; the gate itself is the one component that fails closed rather than degrading. The loop
+starts and ends outside the system boundary: the operator's application calls the serve path
+per placement render and originates the user-activity events that feed the streams.
 
 ## 6. Evolution Roadmap (v1 → v4)
 
