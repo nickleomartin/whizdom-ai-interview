@@ -27,7 +27,7 @@ Latency budget: P99 <= 100ms end-to-end. Illustrative, not executable — see CL
 #     #    component where compliance outranks availability.
 #     gated = final_gate(itemset, ctx)                 # ~3-5ms
 #
-#     # 4. Optional request-time re-rank (v4 only; ADR-0003, stubs/online_ranker.py)
+#     # 4. Optional request-time re-rank (v4 only; ADR-0003, stubs/online_reranker.py)
 #     #    session-intent features under a hard 30ms budget; on breach or missing
 #     #    features, serve the gated order unchanged (v3 behaviour).
 #     result = rerank(gated, session_features(ctx))    # <=30ms or fallback

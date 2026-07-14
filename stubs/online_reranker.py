@@ -9,7 +9,7 @@ Illustrative, not executable — see CLAUDE.md.
 
 from dataclasses import dataclass
 
-from features import FeatureVector
+from feature_contract import FeatureVector
 from itemset import Itemset, ItemsetEntry
 
 
