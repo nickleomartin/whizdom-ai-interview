@@ -131,6 +131,23 @@ export function Diagram({ version }: { version: Version }) {
                         {n.sub}
                       </text>
                     )}
+                    {allStages &&
+                      STAGES.map((s, i) => {
+                        const cw = (n.w - 20 - 6) / 2
+                        const cx = n.x + 10 + (i % 2) * (cw + 6)
+                        const cy = n.y + 52 + Math.floor(i / 2) * 22
+                        const lit = activeStage === null || activeStage === s.id
+                        return (
+                          <g key={s.id} style={{ opacity: lit ? 1 : 0.25, transition: 'opacity 200ms' }}>
+                            <rect x={cx} y={cy} width={cw} height={17} rx={3}
+                              style={{ fill: 'var(--bg-panel)', stroke: s.color, strokeWidth: activeStage === s.id ? 1.6 : 0.9 }} />
+                            <text x={cx + cw / 2} y={cy + 12} textAnchor="middle"
+                              style={{ fill: s.color, fontSize: 8.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+                              {s.name.toUpperCase()}
+                            </text>
+                          </g>
+                        )
+                      })}
                     {!active && (
                       <text className="arrives" x={n.x + n.w - 8} y={n.y + 14} textAnchor="end">
                         arrives v{mod.arrivesAt}

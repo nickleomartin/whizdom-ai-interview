@@ -41,7 +41,7 @@ export const NODES: NodeBox[] = [
   { id: 'ordering', x: 770, y: 280, w: 150, h: 54, sub: 'six explicit rules', short: 'Ordering' },
 
   // nearline band (middle)
-  { id: 'nearline', x: 330, y: 190, w: 230, h: 100, sub: 'rebuild runs all four stages' },
+  { id: 'nearline', x: 330, y: 190, w: 230, h: 100, sub: 'coalesce → target → rebuild:' },
 
   // store
   { id: 'store', x: 400, y: 360, w: 340, h: 54, sub: 'itemsets · versions recorded · TTL flags' },
