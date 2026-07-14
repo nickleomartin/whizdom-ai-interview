@@ -1,0 +1,58 @@
+/* Skin token system — two operator-faithful skins from one variable set */
+
+body[data-skin='b365'] {
+  --bg: #20242a;
+  --surface: #2b3138;
+  --surface-2: #353c45;
+  --text: #e8eaed;
+  --text-dim: #9aa4ae;
+  --accent: #ffdf1b;
+  --accent-2: #027b5b;
+  --accent-text: #20242a;
+  --odds-bg: #3d454f;
+  --odds-text: #ffdf1b;
+  --up: #2ecc71;
+  --down: #e74c3c;
+  --promo: #ffdf1b;
+  --promo-text: #20242a;
+  --live: #e74c3c;
+  --radius: 3px;
+  --density: 6px;
+  --font-size: 13px;
+  --font: -apple-system, 'Segoe UI', Arial, sans-serif;
+  --header-bg: #14171b;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+body[data-skin='fd'] {
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #14232e;
+  --text-dim: #5f7181;
+  --accent: #1493ff;
+  --accent-2: #0a6ecd;
+  --accent-text: #ffffff;
+  --odds-bg: #e7f2fd;
+  --odds-text: #1470c8;
+  --up: #1e9e5a;
+  --down: #d63b3b;
+  --promo: #ff5e00;
+  --promo-text: #ffffff;
+  --live: #d63b3b;
+  --radius: 10px;
+  --density: 12px;
+  --font-size: 14px;
+  --font: -apple-system, 'Segoe UI', 'Trebuchet MS', sans-serif;
+  --header-bg: #0b2a42;
+  --shadow: 0 2px 8px rgba(20, 35, 46, 0.08);
+}
+
+/* x-ray debug chrome — deliberately non-consumer: mono, dashed, signal colours */
+body {
+  --xray-bg: rgba(10, 14, 24, 0.92);
+  --xray-text: #7ef0c0;
+  --xray-warn: #ffb020;
+  --xray-block: #ff5470;
+  --xray-font: ui-monospace, 'SF Mono', Menlo, monospace;
+}
