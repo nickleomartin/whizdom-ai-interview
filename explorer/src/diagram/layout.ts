@@ -9,6 +9,8 @@ export interface NodeBox {
   w: number
   h: number
   sub?: string
+  /** Shorter display title for narrow boxes; drawer shows the full module title. */
+  short?: string
 }
 
 export interface EdgeDef {
@@ -32,14 +34,14 @@ export const NODES: NodeBox[] = [
   { id: 'warehouse', x: 620, y: 30, w: 280, h: 56, sub: 'history · aggregates · logs' },
 
   // offline band (right)
-  { id: 'retrieval', x: 620, y: 150, w: 280, h: 52, sub: '5 sources → 400–600 candidates' },
-  { id: 'ease', x: 620, y: 214, w: 132, h: 44, sub: 'class co-engagement' },
-  { id: 'prefilter', x: 768, y: 214, w: 132, h: 44, sub: 'rule packs @ build' },
-  { id: 'scoring', x: 620, y: 270, w: 132, h: 44, sub: 'calibrated P(engage)' },
-  { id: 'ordering', x: 768, y: 270, w: 132, h: 44, sub: 'six explicit rules' },
+  { id: 'retrieval', x: 608, y: 150, w: 312, h: 52, sub: '5 sources → 400–600 candidates' },
+  { id: 'ease', x: 608, y: 214, w: 150, h: 54, sub: 'class co-engagement', short: 'EASE affinity' },
+  { id: 'prefilter', x: 770, y: 214, w: 150, h: 54, sub: 'rule packs @ build', short: 'Pre-filter' },
+  { id: 'scoring', x: 608, y: 280, w: 150, h: 54, sub: 'calibrated P(engage)', short: 'Scoring (GBDT)' },
+  { id: 'ordering', x: 770, y: 280, w: 150, h: 54, sub: 'six explicit rules', short: 'Ordering' },
 
   // nearline band (middle)
-  { id: 'nearline', x: 330, y: 190, w: 230, h: 100, sub: 'coalesce → target → rebuild' },
+  { id: 'nearline', x: 330, y: 190, w: 230, h: 100, sub: 'rebuild runs all four stages' },
 
   // store
   { id: 'store', x: 400, y: 360, w: 340, h: 54, sub: 'itemsets · versions recorded · TTL flags' },
@@ -74,7 +76,7 @@ export const EDGES: EdgeDef[] = [
 /** Tier bands drawn behind nodes */
 export const BANDS = [
   { label: 'SOURCES', x: 24, y: 14, w: 892, h: 88, color: 'var(--text-dim)' },
-  { label: 'OFFLINE — hourly batch', x: 604, y: 122, w: 312, h: 210, color: 'var(--tier-offline)' },
+  { label: 'OFFLINE — hourly batch', x: 596, y: 122, w: 336, h: 226, color: 'var(--tier-offline)' },
   { label: 'NEARLINE — event-triggered (v3+)', x: 314, y: 162, w: 262, h: 142, color: 'var(--tier-nearline)' },
   { label: 'ONLINE — request path', x: 24, y: 442, w: 832, h: 120, color: 'var(--tier-online)' },
   { label: 'OPERATOR — application layer', x: 24, y: 586, w: 640, h: 90, color: 'var(--text-muted)' },

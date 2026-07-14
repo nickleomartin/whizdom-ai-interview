@@ -86,8 +86,10 @@ export function Diagram({ version }: { version: Version }) {
               {NODES.map((n) => {
                 const mod = MODULES[n.id]
                 const active = version >= mod.arrivesAt
-                const stageDimmed = activeStage !== null && mod.stage !== activeStage
-                const stageLit = activeStage !== null && mod.stage === activeStage
+                // nearline workers rebuild with the same stage logic — they belong to every stage
+                const allStages = mod.id === 'nearline'
+                const stageDimmed = activeStage !== null && mod.stage !== activeStage && !allStages
+                const stageLit = activeStage !== null && (mod.stage === activeStage || allStages)
                 const cls = [
                   'node',
                   `tier-${mod.tier}`,
@@ -106,17 +108,23 @@ export function Diagram({ version }: { version: Version }) {
                     {mod.stage && (
                       <rect x={n.x} y={n.y} width={4} height={n.h} rx={2} style={{ fill: STAGE_COLOR[mod.stage], stroke: 'none' }} />
                     )}
-                    {mod.stage && (
-                      <text x={n.x + n.w - 8} y={n.y + n.h - 8} textAnchor="end"
+                    {mod.stage && active && (
+                      <text x={n.x + n.w - 8} y={n.y + 14} textAnchor="end"
                         style={{ fill: STAGE_COLOR[mod.stage], fontSize: 8.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
                         {mod.stage.toUpperCase()}
+                      </text>
+                    )}
+                    {allStages && active && (
+                      <text x={n.x + n.w - 8} y={n.y + 14} textAnchor="end"
+                        style={{ fill: 'var(--tier-nearline)', fontSize: 8.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
+                        ALL STAGES
                       </text>
                     )}
                     <text className="node-tag" x={n.x + 10} y={n.y + 14}>
                       {mod.tier.toUpperCase()}
                     </text>
                     <text className="node-title" x={n.x + 10} y={n.y + 30}>
-                      {mod.title}
+                      {n.short ?? mod.title}
                     </text>
                     {n.sub && (
                       <text className="node-sub" x={n.x + 10} y={n.y + 44}>
