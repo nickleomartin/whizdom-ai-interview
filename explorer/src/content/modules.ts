@@ -70,7 +70,9 @@ export const MODULES: Record<string, ModuleDef> = {
     why: 'The cheapest always-on piece of real-time infrastructure — it makes even a nightly batch build safe to serve.',
     config: [
       { label: 'Freshness SLA', value: '≤ 5s behind the stream' },
+      { label: 'Keyed by', value: 'market ID / slot — no user dimension' },
       { label: 'Consumers', value: 'compliance gate, slot resolution; scoring features only at v4' },
+      { label: 'vs itemset store', value: 'compliance state, not content — kept separate so validity stays ≤5s without rewriting itemsets at stream cadence' },
     ],
     adr: { id: 'ADR-0001', file: '0001-offline-nearline-online-composition.md' },
     glossary: ['Validity KV', 'Slot'],
@@ -166,7 +168,9 @@ export const MODULES: Record<string, ModuleDef> = {
     what: 'The KV store of pre-computed itemsets: one per user (or segment) per placement, written by the batch build and by nearline refreshes. Serving reads the freshest available entry.',
     why: 'The hinge of the whole design — everything expensive happens before this store; everything after it is a lookup plus a gate.',
     config: [
+      { label: 'Keyed by', value: 'tenant × user/segment × placement' },
       { label: 'Entry', value: '~40–60 ranked items, scores, provenance, propensities' },
+      { label: 'vs validity KV', value: 'content, not compliance state — a stale itemset can mis-rank but never surfaces a suspended market, because the gate checks validity separately' },
       { label: 'Versions recorded', value: 'model · feature-set · rule-pack' },
       { label: 'TTL', value: 'staleness flag only — validity is the gate’s job' },
     ],
