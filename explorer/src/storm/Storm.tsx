@@ -183,10 +183,6 @@ export function Storm() {
   )
 }
 
-function baseServe() {
-  return 14 + (Math.random() - 0.5) * 3
-}
-
 function LoadChart({ points }: { points: ChartPoint[] }) {
   const W = 420
   const H = 220

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { link } from '../content/modules'
+import { link, type Stage } from '../content/modules'
+import { STAGE_COLOR } from '../diagram/Diagram'
 import { PERSONAS, ITEMSET, gateFor, rerankNote, type TraceItem } from './data'
 
 /**
@@ -8,13 +9,25 @@ import { PERSONAS, ITEMSET, gateFor, rerankNote, type TraceItem } from './data'
  * suppressions animate out with the rule IDs the audit log would carry.
  */
 
-const STEP_TITLES = [
-  'Resolve user context — jurisdiction, consent, RG tier (consumed, not derived)',
-  'Fetch freshest itemset — nearline refresh if present, else last batch build',
-  'COMPLIANCE GATE — validity ≤5s · slot resolution · live RG · pack-version check · fail-closed',
-  'Optional re-rank (v4) — session features, ≤30ms, fallback to gated order',
-  'Compose — per-placement rules already applied at build; seeded dither logged',
-  'Log impression — features + position + propensity, async: the flywheel',
+const STEPS: { title: string; stage?: Stage; stageNote?: string }[] = [
+  { title: 'Resolve user context — jurisdiction, consent, RG tier (consumed, not derived)' },
+  {
+    title: 'Fetch freshest itemset — nearline refresh if present, else last batch build',
+    stageNote: 'all 4 stages @ build',
+  },
+  {
+    title: 'COMPLIANCE GATE — validity ≤5s · slot resolution · live RG · pack-version check · fail-closed',
+    stage: 'filtering',
+  },
+  {
+    title: 'Optional re-rank (v4) — session features, ≤30ms, fallback to gated order',
+    stage: 'scoring',
+  },
+  {
+    title: 'Compose — per-placement rules already applied at build; seeded dither logged',
+    stage: 'ordering',
+  },
+  { title: 'Log impression — features + position + propensity, async: the flywheel' },
 ]
 
 export function Trace() {
@@ -84,14 +97,20 @@ export function Trace() {
 
           <div>
             <div className="steps">
-              {STEP_TITLES.map((t, i) => {
+              {STEPS.map((s, i) => {
                 const n = i + 1
                 const state = step === n ? 'current' : step > n ? 'done' : ''
                 return (
                   <div key={n} className={`step ${state} ${n === 3 ? 'gate-step' : ''}`}>
                     <span className="n">{n}</span>
                     <span className="t">
-                      {t}
+                      {s.stage && (
+                        <span className="stagebadge" style={{ color: STAGE_COLOR[s.stage], borderColor: STAGE_COLOR[s.stage] }}>
+                          {s.stage.toUpperCase()}
+                        </span>
+                      )}
+                      {s.stageNote && <span className="stagebadge all">{s.stageNote.toUpperCase()}</span>}
+                      {s.title}
                       {n === 1 && step >= 1 && (
                         <span className="detail">
                           → {persona.name}: {persona.jurisdiction} · RG {persona.rgTier}

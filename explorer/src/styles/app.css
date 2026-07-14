@@ -741,3 +741,21 @@ h2.panel-title {
 .node.stage-dimmed rect { opacity: 0.18; }
 .node.stage-dimmed text { opacity: 0.15; }
 .node.stage-lit rect { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15)); }
+
+/* stage badges on trace steps */
+.step .stagebadge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 7px;
+  margin-right: 9px;
+  vertical-align: 1px;
+}
+.step .stagebadge.all {
+  color: var(--text-muted);
+  border-color: var(--hairline-bright);
+}
