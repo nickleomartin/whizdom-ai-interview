@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Settings } from '../sim/types'
 import { useStore, mutate, resetSession } from '../store'
-import { rebuildSession } from '../sim/engine'
+import { rebuildSession, switchVersion } from '../sim/engine'
 import { PERSONAS } from '../personas/personas'
 import { ControlPanel } from './ControlPanel'
 import { PhoneFrame } from './PhoneFrame'
@@ -15,13 +15,12 @@ export interface ShellSlots {
 }
 
 export function updateSettings(patch: Partial<Settings>): void {
-  const rebuild = patch.personaId !== undefined || patch.version !== undefined
-  if (rebuild) {
-    mutate(s => { Object.assign(s.settings, patch) })
-    resetSession() // whole surface re-derives; settings survive
+  mutate(s => { Object.assign(s.settings, patch) })
+  if (patch.personaId !== undefined) {
+    resetSession() // different user ⇒ fresh session; settings survive
     rebuildSession()
-  } else {
-    mutate(s => { Object.assign(s.settings, patch) })
+  } else if (patch.version !== undefined) {
+    switchVersion() // same user, different serving backend ⇒ keep the sim world
   }
 }
 

@@ -239,7 +239,18 @@ export function startFixture(fixtureId: string): void {
   })
 }
 
-// Used by Shell on persona/version change: full re-derive.
+// Used by Shell on version change: keep the sim world (scores, odds, bets, log),
+// switch serving semantics and rebuild the itemset baseline at the current time.
+// v1 then freezes from this point; v3/v4 keep operating on live state.
+export function switchVersion(): void {
+  mutate(s => {
+    log('build', `serving version switched to ${s.settings.version} — itemset baseline rebuilt`)
+    s.nearlineQueue.length = 0
+    buildAllItemsets(s, 'offline')
+  })
+}
+
+// Used by Shell on persona change: full re-derive (different user, fresh session).
 export function rebuildSession(): void {
   notifiedFixtures = new Set()
   reopenSchedule.clear()
