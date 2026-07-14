@@ -26,6 +26,10 @@ This is a design exercise — there is no runnable pipeline, no real data, and n
 - ADRs follow `adr/template.md`. One decision per file. Status transitions: Draft → Accepted.
   Each ADR opens with a one-line pointer to the glossary terms it relies on.
 - Design reasoning lives in `design.md`/ADRs — stubs only carry what a schema/signature can express.
+- Stub style is deliberate and split by artifact kind: **schemas and contracts** are real code
+  (dataclasses, signatures, docstring contracts — importable, `py_compile`-validated);
+  **flows** are commented-out pseudocode read top-to-bottom (`serve_path.py`). Do not convert
+  one style to the other.
 - The working sequence is TASKS.md §4 — do not populate `design.md` sections out of order without reason.
 
 ## How to validate the stubs
