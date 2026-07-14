@@ -5,7 +5,24 @@
 
 ## 1. Why This Design
 
-<!-- Single biggest design decision, alternatives rejected, first thing to validate. Scored deliverable — keep prominent. -->
+The single biggest decision is to split "freshness" into two different problems and refuse to
+pay request-time prices for the one that doesn't need them ([ADR-0001](adr/0001-offline-nearline-online-composition.md)).
+Live market state — odds moves, suspensions, goals — is user-independent: one event invalidates
+many users' recommendations at once, so it is served by **event-triggered nearline recomputation**
+(one recompute amortised across every affected user, serving stays a cheap lookup). Only session
+intent — what *this* user did seconds ago — genuinely requires request-time inference, and it is
+deferred to v4 behind an experiment gate. The classic alternative, "online re-ranks an offline
+pool", was rejected because it pays per-request for what nearline pays per-event — roughly ten
+times the compute for the same freshness on the market-state layer; an online-heavy design was
+rejected on the cost ceiling ([ADR-0007](adr/0007-cost-model.md)): ~€19k/month platform-wide
+buys lookups and CPU re-ranks, not GPU inference at 300 requests per second.
+
+**What I would validate first if building this for real:** the staleness-cost assumption that
+the entire escalation ladder rests on. v1's logs answer it cheaply with two metrics — CTR decay
+versus itemset age (do rankings go stale?) and catalog-coverage staleness (how much live
+engagement lands on markets born after the last build?). If staleness turns out not to cost
+engagement, v3 and v4 never get built and the design stops at a much cheaper system — which is
+the point of gating every escalation on evidence.
 
 ## 2. Requirements & Assumptions
 
