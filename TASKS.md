@@ -9,7 +9,11 @@ only after this process is complete.
 ## 1. System Requirements (state upfront)
 
 ### Functional
-- Recommend relevant markets/bets per user across 3 placements: homepage carousel, in-play sidebar, post-bet suggestions
+- Recommend relevant items per user across 3 placements: homepage carousel, in-play sidebar, post-bet suggestions
+- Recommendable items span **six types** — events, markets, selections, bet-builder/SGP combos,
+  accumulators, boosts — competing in one mixed ranked list per placement. This makes
+  **cross-type score comparability a requirement**: a score of 0.3 must mean the same for an
+  accumulator as for a selection, or the loudest type takes over every placement (see [ADR-0003](adr/0003-ranking-model.md))
 - Two paths: offline (batch, pre-computed) + online (request-time, live signals)
 - Both paths must compose — not independent systems
 - Hard constraints: RG signals, jurisdictional eligibility
@@ -82,18 +86,18 @@ Design must reflect these, not generic "RG filters":
 - [x] Upstream event streams exist and are queryable — no ingestion to build (per brief)
 - [x] Odds updates: seconds-level for in-play (sub-second bursts on major events); pre-match slower
   (minutes). Drives the ≤5s validity-KV SLA
-- [x] Catalog size: ~10k active markets at any time as working number (hundreds of concurrent
-  events × dozens of markets each); thousands, not millions — grounds ADR-0002's "retrieval stays light"
+- [x] Catalog size: ~10–20k active markets at any time (hundreds of concurrent events × dozens
+  of markets each); thousands, not millions — grounds [ADR-0002](adr/0002-candidate-generation.md)'s "retrieval stays light"
 - [x] Catalog churn (added 2026-07-14): in-play micro-markets are born and die in *minutes* —
   "team X to score next?" is settled and **recreated with a new market ID after every goal** (~3 goals/match
   ⇒ ~4 IDs per fixture for the "same" question); dozens of micro-market births per live match-hour.
   Consequence: itemsets must reference **stable slots** (fixture × market-type), late-bound to the concrete
-  live market ID at serve — never store short-lived IDs in a batch-built pool (see §6b, ADR-0002)
-- [x] Feature store: none assumed to exist — we spec the *contract* (ADR-0004), not the implementation
+  live market ID at serve — never store short-lived IDs in a batch-built pool (see §6b, [ADR-0002](adr/0002-candidate-generation.md))
+- [x] Feature store: none assumed to exist — we spec the *contract* ([ADR-0004](adr/0004-feature-store-contract.md)), not the implementation
 - [x] A/B framework: assume basic experiment assignment exists platform-side; we spec metrics,
   guardrails, and analysis approach, not the assignment infra
 - [x] Jurisdiction eligibility: platform resolves user → jurisdiction + consent flags; the recsys
-  owns *applying* rule packs (placement / market-type / item×user) in its filtering points (ADR-0005)
+  owns *applying* rule packs (placement / market-type / item×user) in its filtering points ([ADR-0005](adr/0005-rg-enforcement-point.md))
 
 ### Business assumptions (fixed 2026-07-14)
 - [x] Primary metric: decided at evaluation design (TASKS step 12); candidate primary = bet
@@ -101,7 +105,7 @@ Design must reflect these, not generic "RG filters":
 - [x] RG constraints: audit requirements — log + block (hard gate, suppression logged with rule ID);
   never soft nudges
 - [x] Operator-level customisation: config only (candidate-source proportions, ordering rules,
-  placement config) — no ranking-logic overrides in v1–v4 (consistent with ADR-0006 pooled model)
+  placement config) — no ranking-logic overrides in v1–v4 (consistent with [ADR-0006](adr/0006-multi-tenancy.md) pooled model)
 
 ### SaaS / tenancy assumptions (confirmed stances)
 - Assume ~10 mid-size operator tenants, each ~€1-5M GGR/month (below the ~$20-30M/yr GGR
@@ -125,13 +129,13 @@ Design must reflect these, not generic "RG filters":
 - Operators migrate from rev-share to enterprise licence around **$20–30M annual GGR** — anchors "mid-size"
   below that ([nowg](https://www.nowg.net/sports-betting-b2b-solution-guide/))
 
-**Derived top-down ceiling (state in ADR-0007):**
+**Derived top-down ceiling (state in [ADR-0007](adr/0007-cost-model.md)):**
 - 10 tenants × €2.5M avg GGR/month = €25M GGR/month platform-wide
 - Platform take 10% (mid of 8–12% benchmark) → **€2.5M/month platform revenue**
 - Infra ≤15% of platform revenue (B2B SaaS norm; Kambi-style providers spend ~20-25% on all tech incl. R&D) → €375k/month
 - Recsys ≤5% of infra → **~€19k/month platform-wide ≈ €2k/tenant/month**
 
-**Bottom-up unit sanity check (state in ADR-0007):**
+**Bottom-up unit sanity check (state in [ADR-0007](adr/0007-cost-model.md)):**
 - Assume 50k MAU/tenant × ~50 rec requests/user/month → ~25M requests/month platform-wide
 - Budget allows **~€0.75 per 1k requests**; KV lookup + CPU GBDT re-rank ≈ €0.05–0.20/1k → fits with 4–10x headroom
 - GPU deep-model serving ≈ 10–50x that unit cost → **ruled out for v1–v2**; revisit at v3 only if experiments justify
@@ -141,7 +145,7 @@ Design must reflect these, not generic "RG filters":
 
 ## 3. Design Decisions (each maps to an ADR)
 
-### ADR-0001: Offline/Nearline/Online Composition Strategy
+### [ADR-0001](adr/0001-offline-nearline-online-composition.md): Offline/Nearline/Online Composition Strategy
 - Question: Which execution tier (batch / nearline event-triggered / request-time) runs each of the 4 stages, at each version?
 - Options: (a) offline-only with staleness compensation, (b) offline + nearline refresh [v3 target],
   (c) offline + nearline + online re-rank [v4 target], (d) online-heavy (rejected: cost)
@@ -152,7 +156,7 @@ Design must reflect these, not generic "RG filters":
 - Decision criteria: how much pool invalidity is user-independent (nearline-fixable: suspensions, odds swings)
   vs session-specific (online-only: intent shift)?
 
-### ADR-0002: Candidate Generation Approach
+### [ADR-0002](adr/0002-candidate-generation.md): Candidate Generation Approach
 - Question: How do we generate the ~100-500 candidate markets per user before ranking?
 - Options: (a) heuristic multi-source blend (sport affinity + popularity + starting-soon),
   (b) collaborative filtering (user-user, item-item), (c) two-tower embedding model, (d) hybrid
@@ -162,13 +166,13 @@ Design must reflect these, not generic "RG filters":
   scoring-all-eligible is feasible. Retrieval must justify existing at all before justifying being clever
 - Simple, defensible choice preferred over ambitious one we can't defend
 
-### ADR-0003: Ranking Model
+### [ADR-0003](adr/0003-ranking-model.md): Ranking Model
 - Question: What model ranks the ~100-500 candidates to top-K for serving?
 - Options: (a) GBDT (XGBoost/LightGBM) on hand-crafted features, (b) neural ranker, (c) pointwise LR, (d) learned LTR
 - Constraints: feature availability at serving time, training cadence, explainability for RG audit
 - What features are available offline vs online?
 
-### ADR-0004: Feature Store Contract
+### [ADR-0004](adr/0004-feature-store-contract.md): Feature Store Contract
 - Question: What is the shared contract between offline training and online serving?
 - Decide: which features are pre-computed (batch, in itemset), which are fetched live (odds, session),
   which are derived at request time
@@ -176,7 +180,7 @@ Design must reflect these, not generic "RG filters":
   skew is a stated failure mode, not an afterthought
 - This determines the offline/online boundary precisely
 
-### ADR-0005: RG Enforcement Point
+### [ADR-0005](adr/0005-rg-enforcement-point.md): RG Enforcement Point
 - Question: Where in the pipeline do RG and eligibility constraints apply?
 - Options: (a) pre-filter candidates before ranking, (b) post-rank hard removal,
   (c) both — two-point filtering [decision], (d) soft penalty in ranking score
@@ -190,7 +194,7 @@ Design must reflect these, not generic "RG filters":
 - Constraint: RG must be auditable — hard filter, not soft penalty alone; final gate is the auditable choke
   point, logging every suppression with rule ID
 
-### ADR-0006: Multi-Tenancy Model
+### [ADR-0006](adr/0006-multi-tenancy.md): Multi-Tenancy Model
 - Question: One pooled model across tenants, or per-tenant models? Data siloed or shared?
 - Options: (a) pooled model + siloed data + tenant features [leaning], (b) per-tenant models,
   (c) pooled with opt-in cross-tenant training, (d) tiered — pooled default, per-tenant for premium operators
@@ -199,7 +203,7 @@ Design must reflect these, not generic "RG filters":
 - Leaning: pooled model + siloed data — best cold-start, one training pipeline; present per-tenant as
   rejected-with-criteria
 
-### ADR-0007: Cost Model & Serving Budget
+### [ADR-0007](adr/0007-cost-model.md): Cost Model & Serving Budget
 - Question: What cost ceiling constrains architecture choices, and how is it derived?
 - Top-down: ~10 tenants × €1-5M GGR/month; platform take ~10%; infra ≤15% of platform revenue;
   recsys ≤5% of infra → ~€1-4k/month/tenant
@@ -209,6 +213,20 @@ Design must reflect these, not generic "RG filters":
   precomputed pool; cache aggressively; 10x Saturday peak sizing
 - This ADR is *why* the architecture is offline-heavy — cost, not just latency
 
+### [ADR-0008](adr/0008-ordering-stage.md): Ordering Stage Composition (added 2026-07-14)
+- Question: How is the final ranked list composed from the gated, calibrated candidate list?
+- Decision: explicit utility composition, six ordered rules (utility sort → diversity caps →
+  own-mix calibration → promo slotting → new-item floor → seeded dithering), all weights and
+  caps as versioned tenant-tunable configuration. Per-placement behaviour is config, not code
+
+### [ADR-0009](adr/0009-feedback-loop-control.md): Feedback-Loop Control (added 2026-07-14)
+- Question: Where do recommender feedback loops get owned — mechanisms, monitoring, exploration policy?
+- Decision: a system-property record mapping the four pathologies (popularity amplification,
+  chasing losses, RG-tier exposure collapse, novelty starvation) to structural mitigations in
+  their implementing ADRs plus guardrail monitoring signals from v1; exploration beyond seeded
+  dithering deferred behind stated preconditions. Separate from [ADR-0008](adr/0008-ordering-stage.md) because ordering is a
+  stage, loop control spans the system
+
 ---
 
 ## 4. Architecture Decision Process (sequence to follow)
@@ -216,18 +234,18 @@ Design must reflect these, not generic "RG filters":
 Work through in this order before writing design.md:
 
 1. **State requirements** (functional + non-functional incl. throughput, RG regulatory constraints — from above)
-2. **Fix business context** (tenancy scale, cost ceiling — ADR-0006, ADR-0007) — these constrain everything downstream
+2. **Fix business context** (tenancy scale, cost ceiling — [ADR-0006](adr/0006-multi-tenancy.md), [ADR-0007](adr/0007-cost-model.md)) — these constrain everything downstream
 3. **Fix data assumptions** (what upstream gives us, what we don't build)
 4. **Define mental model** (behaviour-layer table, section 6) — what we're modelling and the cheapest infra
    tier that serves each layer. *Input to composition, so it comes before it*
 5. **Adopt organizing framework** (Merlin 4 stages × Netflix 3 tiers — section 5b) — gives every later decision a named home
-6. **Decide offline/nearline/online composition** (ADR-0001) — which tier runs each stage at each version
+6. **Decide offline/nearline/online composition** ([ADR-0001](adr/0001-offline-nearline-online-composition.md)) — which tier runs each stage at each version
    (Stage×Version matrix); primary inputs: mental model (step 4) + cost ceiling (step 2)
-7. **Decide RG enforcement points** (ADR-0005) — place the two filter points in the pipeline.
+7. **Decide RG enforcement points** ([ADR-0005](adr/0005-rg-enforcement-point.md)) — place the two filter points in the pipeline.
    *Before candidate gen: the eligibility pre-filter defines the pool candidate generation operates on*
-8. **Decide candidate generation** (ADR-0002) — operates on the pre-filtered pool; sets the offline batch job design
-9. **Decide feature contract** (ADR-0004) — boundary set by composition; shared by training and all serving tiers
-10. **Decide ranking model** (ADR-0003) — consumes the feature contract; sets per-tier compute budget
+8. **Decide candidate generation** ([ADR-0002](adr/0002-candidate-generation.md)) — operates on the pre-filtered pool; sets the offline batch job design
+9. **Decide feature contract** ([ADR-0004](adr/0004-feature-store-contract.md)) — boundary set by composition; shared by training and all serving tiers
+10. **Decide ranking model** ([ADR-0003](adr/0003-ranking-model.md)) — consumes the feature contract; sets per-tier compute budget
 11. **Define evolution roadmap** (section 7) — v1–v4 with experiment gates and data-source matrix.
     *Output of the ADRs, not an input*
 12. **Design evaluation** — only after architecture is fixed can we spec the right metrics
@@ -240,6 +258,9 @@ Work through in this order before writing design.md:
 
 ## 5b. Organizing Framework — 4 stages × 3 execution tiers (design.md structural spine)
 
+> Formalised as [ADR-0000](adr/0000-organizing-framework.md), including the translation table
+> between the assessment's topic vocabulary and the framework's stage×tier grid.
+
 Two composed frameworks, with lineage stated
 ([Amatriain's 10-year blueprint retrospective](https://amatria.in/blog/RecsysArchitectures):
 Netflix 3-tier 2013 → Yan 2x2 2021 → Merlin 4-stage 2022 → Fennel 8-stage feedback-loop-centric 2022):
@@ -250,12 +271,12 @@ validated at Instagram/Pinterest/Instacart, consistent with [surveys](https://ar
 
 1. **Retrieval** — narrowing catalog to candidates. NOTE (Amatriain): candidate selection is *optional* for
    small catalogs — our active catalog is ~thousands of markets, not web-scale millions. Retrieval stays
-   deliberately light (heuristic blend); scoring-all-eligible is feasible. Guards ADR-0002 against over-engineering.
+   deliberately light (heuristic blend); scoring-all-eligible is feasible. Guards [ADR-0002](adr/0002-candidate-generation.md) against over-engineering.
 2. **Filtering** — business rules the model cannot learn. **Adopt Amatriain's critique of Merlin**
    ("overly prescriptive about when filtering occurs; conflates different logic types"): filtering is TWO-POINT,
    not one stage — (i) *eligibility pre-filter* at itemset build time (jurisdiction, RG tier, slow-moving rules —
    prunes before scoring spend), (ii) *validity + RG final gate* immediately before serving (suspended markets,
-   live RG limit trips — fast-moving, last word). Maps to ADR-0005 with answer "both".
+   live RG limit trips — fast-moving, last word). Maps to [ADR-0005](adr/0005-rg-enforcement-point.md) with answer "both".
 3. **Scoring** — expensive per-candidate model, richest features. GBDT (v2+).
 4. **Ordering** — final composition ≠ score sort: diversity, calibration to user's own mix, popularity-bias
    mitigation, placement rules. Feedback-loop mitigations live here.
@@ -292,12 +313,12 @@ plus [generative-rec survey](https://www.techrxiv.org/doi/10.36227/techrxiv.1765
 ### ADOPTED (each earns its place under our constraints)
 
 1. **Eugene Yan's 2x2 framework** (offline/online × retrieval/ranking) — overlays the 4-stage pattern; every
-   Stage×Version matrix cell gets an explicit tier placement. Sharpens ADR-0001.
+   Stage×Version matrix cell gets an explicit tier placement. Sharpens [ADR-0001](adr/0001-offline-nearline-online-composition.md).
 2. **Train-serve consistency** — same feature store + identical transforms offline (training) and online
-   (serving) to kill train-serve skew. Stated requirement of ADR-0004.
+   (serving) to kill train-serve skew. Stated requirement of [ADR-0004](adr/0004-feature-store-contract.md).
 3. **Multi-source candidate blending** (ML Architect) — retrieval = blend of named generators with explicit
    proportions (segment-popularity + user sport-affinity + starting-soon/live). Cheap, aids cold-start +
-   diversity, tenant-tunable proportions (multi-tenancy win). Feeds ADR-0002.
+   diversity, tenant-tunable proportions (multi-tenancy win). Feeds [ADR-0002](adr/0002-candidate-generation.md).
 4. **Hard negatives from impressions** (Meta/Amazon pattern) — v2 ranker trains with impressed-but-not-engaged
    as hard negatives vs random negatives; ~100:1 easy-to-hard ratio as starting point. Feeds v2 training design.
 5. **Business-rules ordering layer, incl. calibration** (Instagram round-robin diversification, Netflix
@@ -315,7 +336,7 @@ plus [generative-rec survey](https://www.techrxiv.org/doi/10.36227/techrxiv.1765
 
 | Idea | Why binned | Revisit when |
 |---|---|---|
-| Generative retrieval / semantic IDs / LLM-as-ranker | Experimental — Spotify's own study: generative "consistently lagged specialized baselines"; GPU serving violates ADR-0007 ceiling; unexplainable rankings fail RG audit | Production-proven in regulated verticals AND CPU-servable distillations exist |
+| Generative retrieval / semantic IDs / LLM-as-ranker | Experimental — Spotify's own study: generative "consistently lagged specialized baselines"; GPU serving violates [ADR-0007](adr/0007-cost-model.md) ceiling; unexplainable rankings fail RG audit | Production-proven in regulated verticals AND CPU-servable distillations exist |
 | Foundation-model consolidation (360Brew-style 150B; Netflix central FM + Hydra per [2025 PRS workshop](https://www.shaped.ai/blog/key-insights-from-the-netflix-personalization-search-recommendation-workshop-2025)) | Fleet-scale economics vs our €19k/month budget — off by ~3 orders of magnitude. Bonus caveat from same workshop: Instacart found LLM-based synthetic evaluation "harder than anticipated" | Never at this scale; reconsider >100 tenants |
 | **Full RL (DQN / REINFORCE / actor-critic)** | Needs logging maturity + off-policy eval infra we won't have before v3; **exploration in a gambling context is an RG hazard by design** — an exploring policy can push risky bets at vulnerable users to "learn". Strongest bin entry — state prominently | Only ever the narrow slice below |
 | Contextual bandits (narrow: ordering-stage exploration slot) | Defensible eventually (causal/sequential layer) but premature: requires logged propensities (v1+), stable baseline (v2+), and RG-safe action space (filtered candidates only) | Post-v3, with RG-filtered action space and IPS eval working |
@@ -389,6 +410,8 @@ The delivery strategy — not a one-shot end state. Freshness escalates in cost 
 ### v2 — Learned ranking over offline candidates *(stable preference, individual-level)*
 - GBDT ranker on interaction features (bet history, odds views, bet-type/odds-band affinity; hard negatives
   from impressions), trained offline, still batch-served; ordering adds calibration to user's own mix
+- Retrieval blend gains its only learned source: class-level EASE affinity ([ADR-0002](adr/0002-candidate-generation.md) source 5) —
+  shares training-data plumbing with the ranker, covers cross-sport/cross-market discovery
 - Gate to v3: v2 beats v1 in A/B on primary metric without guardrail regression, AND staleness shown binding
   — two distinct staleness metrics (§6b): (a) *attribute staleness*: CTR decay vs itemset age;
   (b) *existence miss / coverage*: share of live betting volume landing on markets born after the last
