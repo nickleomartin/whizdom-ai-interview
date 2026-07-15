@@ -33,16 +33,20 @@ deliverable. Summaries only, deep-linking back to the canonical markdown; source
 | [design.md](design.md) | **The design document** — architecture, roadmap, modelling, RG, evaluation |
 | [TASKS.md](TASKS.md) | The working document behind the design: requirements, assumptions (sourced), decision sequence, research adoptions and the "Bin" of rejected ideas |
 | [adr/](adr/) | Architecture Decision Records — ten decisions, indexed in [adr/README.md](adr/README.md) |
-| [stubs/](stubs/) | Code stubs that illustrate the design (itemset schema, feature contract, ranker signature, request flow) |
+| [stubs/](stubs/) | Code stubs that illustrate the design (itemset schema, feature contract, compliance gate, ranker signature, nearline worker, request flow) |
+| [explorer/](explorer/) | Source of the deployed design explorer (React; renders design.md with live figures) |
+| [prototype/](prototype/) | Source of the deployed sportsbook UI simulation (React; synthetic data only) |
 | [assessment/](assessment/) | The original brief |
 | [sessions/](sessions/2026-07-10-session-1.md) | How AI agents were used — ten logged corrections where the agent got it wrong, plus the raw tool-call log |
 | [GLOSSARY.md](GLOSSARY.md) | Definitions of every coined term (itemset, slot, rule pack, tier, …) |
-| [CLAUDE.md](CLAUDE.md) | Agent conventions, guardrails, and how to validate the stubs |
+| [CLAUDE.md](CLAUDE.md) | Agent conventions: coherence rules, guardrails, validation commands |
 
-## Validating the stubs
+## Validating the artifacts
 
 ```bash
-python3 -m py_compile stubs/*.py
+python3 -m py_compile stubs/*.py       # stubs: syntax only
+cd explorer && npm run build           # design explorer: type-check + bundle
+cd prototype && npm run build          # UI simulation: type-check + bundle
 ```
 
 Stubs are illustrative design artifacts — syntax-valid Python, deliberately not runnable as a system.
