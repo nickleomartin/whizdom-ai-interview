@@ -1,8 +1,9 @@
 """The v4 request-time re-ranker — signature and contract only (ADR-0001, ADR-0003).
 
 Everything before v4 serves without this function existing: the serve path is
-lookup + gate + slot resolution. The re-ranker is an optional, bounded optimisation
-with a guaranteed fallback — never a load-bearing component.
+lookup + gate + slot resolution. The re-ranker is a bounded component with a
+guaranteed fallback — never load-bearing: serving is whole without it, at every
+version.
 
 Illustrative, not executable — see CLAUDE.md.
 """
@@ -45,5 +46,8 @@ def rerank(
       counterfactual evaluation must filter or reweight fallback impressions.
     - SAME MODEL ARTIFACT as the offline and nearline tiers (ADR-0003) — only the
       available feature groups differ; missing groups route natively in the GBDT.
+    - FEATURES AT v4. `session_features` is the request-time FeatureVector: the
+      user-session group plus the live-market-state group, which becomes
+      scoring-legal at v4 (ADR-0004) — not session signals alone.
     """
     raise NotImplementedError("design stub - see docstring for the contract")
