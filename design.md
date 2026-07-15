@@ -105,6 +105,7 @@ flowchart TB
     WH -->|build + training inputs| OFF
     ES -->|triggers, v3| NL
     ES -->|validity feed| VKV
+    ES -.->|"session features, v4"| SERVE
     OFF <-.->|same stage logic| NL
     OFF -->|write| STORE
     NL -->|write| STORE
