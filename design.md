@@ -288,6 +288,19 @@ model lifecycle management beyond version-rejection-at-serve (registry, canary, 
 deployment); the SLO ownership/alerting table; impression-log retention policy (default 90d
 hot / 1y cold, pending GDPR review); serve-time lightweight explanations.
 
+**What a strict four hours would have shipped.** The disciplined solo minimum, for the record:
+design.md alone, with the other eight ADRs' decisions compressed into its sections; **two ADRs
+split out** — [ADR-0001](adr/0001-offline-nearline-online-composition.md), because the
+offline/nearline/online composition is the brief's central question and the design's single
+biggest decision, and [ADR-0005](adr/0005-rg-enforcement-point.md), because in a regulated
+vertical the compliance architecture is the one decision that cannot be a paragraph; the four
+stubs the brief names (itemset schema, feature contract, re-ranker signature, serve-path
+pseudocode) rather than six; and CLAUDE.md plus a short agent-usage note. Cut: the interactive
+explorer and the UI prototype, the glossary (terms defined inline instead), TASKS.md (the
+working document stays private), the seven other ADRs as separate records, and the Bin as a
+table. Everything above that floor exists because agent collaboration changed the economics of
+the marginal artifact — the floor is the scoping judgement; the rest is leverage.
+
 **With more time, in order**: (1) validate the staleness-cost assumption on real logs — it
 gates everything after v2; (2) pressure-test nearline targeting against recorded Saturday
 event bursts; (3) take the "are recommendations marketing?" question to compliance before v1
