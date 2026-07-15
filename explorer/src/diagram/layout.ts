@@ -70,7 +70,8 @@ export const EDGES: EdgeDef[] = [
   { id: 'e-app-serve', from: 'app', to: 'serve', d: 'M 185 610 C 220 585 260 560 310 544', label: 'request: tenant · placement · user', labelAt: [60, 585], kind: 'serve' },
   { id: 'e-app-streams', from: 'app', to: 'streams', d: 'M 52 610 C 6 470 6 180 42 86', label: 'user activity', labelAt: [10, 350], kind: 'data' },
   { id: 'e-serve-out', from: 'serve', to: 'placements', d: 'M 480 544 L 488 610', label: 'response', labelAt: [494, 584], kind: 'serve' },
-  { id: 'e-flywheel', from: 'serve', to: 'warehouse', d: 'M 600 530 C 880 520 920 220 830 86', label: 'impressions + suppressions — the flywheel', labelAt: [700, 560], kind: 'data' },
+  { id: 'e-flywheel', from: 'serve', to: 'warehouse', d: 'M 560 544 C 760 592 930 540 932 320 C 933 160 900 100 856 86', label: 'impressions + suppressions — the flywheel', labelAt: [610, 578], kind: 'data' },
+  { id: 'e-sess', from: 'streams', to: 'reranker', d: 'M 282 66 C 560 96 700 260 745 470', label: 'session features (v4)', labelAt: [610, 200], kind: 'serve', arrivesAt: 4 },
 ]
 
 /** Tier bands drawn behind nodes */
