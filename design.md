@@ -8,12 +8,13 @@ supporting apps; [sessions/](sessions/2026-07-10-session-1.md) logs the split an
 corrections where the agent got it wrong.
 
 **The design in one paragraph.** A recommendation is built off the request path and served as a
-lookup plus a fail-closed compliance gate. Three execution tiers instead of the classic two,
+lookup plus a fail-closed compliance gate; request-time model work never exceeds a bounded
+re-rank of the already-gated list. Three execution tiers instead of the classic two,
 because "freshness" is two different problems: live market state (odds, suspensions, goals) is
 user-independent — one event invalidates many users' lists at once, so it is served by
 event-triggered **nearline** recomputation, paid once per event; session intent (what this user
 did seconds ago) is the only signal that genuinely needs request-time inference, and is served
-by a budget-boxed request-time re-ranker. That is the target system; it is delivered in four
+by that bounded re-ranker. That is the target system; it is delivered in four
 evidence-gated stages (§2). A revenue-derived cost ceiling (~€19k/month) makes this
 offline-heavy shape a derived necessity, not a taste.
 

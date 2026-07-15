@@ -171,7 +171,11 @@ export function Storm() {
               baseline (serving is lookups) and a <em>flat-topped</em> bump during the storm —
               flat because the bounded worker budget caps it. The stage logic is identical in
               both paths, so the gap reduces to <em>reads per user between market events</em> —
-              about ten.{' '}
+              about ten. <strong>Scope:</strong> this chart models the v3 decision — how
+              market-state freshness is bought. At v4 a bounded session re-rank adds a
+              per-request cost <em>by choice</em>, for a different signal (session intent),
+              gated on evidence — and it sheds to the gated order under storm load without
+              losing market-state freshness, which the counterfactual cannot do.{' '}
               <a href={link.adr('0001-offline-nearline-online-composition.md')} target="_blank" rel="noreferrer">
                 ADR-0001: the arithmetic ↗
               </a>
