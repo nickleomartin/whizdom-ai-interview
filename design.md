@@ -40,6 +40,33 @@ the last build) — plus the empirical check on the ~10x multiple itself: sideba
 per event window, logged from day one. If staleness turns out not to cost engagement, v3 and v4
 never get built — which is the point of gating every escalation on evidence.
 
+### What this design is built for — and what it trades away
+
+The quality attributes are **ordered**: when two conflict, the higher one wins. Every conflict
+below has already been resolved this way somewhere in the ADRs.
+
+| Built for (priority order) | Stance | Where enforced |
+|---|---|---|
+| Compliance & auditability | Non-negotiable top | Fail-closed gate; hard filters, never soft penalties; versions on everything; replayable decisions ([ADR-0005](adr/0005-rg-enforcement-point.md), [ADR-0004](adr/0004-feature-store-contract.md)) |
+| Cost-efficiency | Binding ceiling, not aspiration | €19k/month decides tier placement; per-event beats per-request; CPU-only ([ADR-0007](adr/0007-cost-model.md), [ADR-0001](adr/0001-offline-nearline-online-composition.md)) |
+| Freshness — where it pays | Bought in cost order, evidence-gated | Batch → nearline → online; each escalation needs an experiment ([ADR-0001](adr/0001-offline-nearline-online-composition.md)) |
+| Evolvability | Same shape at every version | Four stages fixed, tiers escalate without re-architecture; ordering is config; one model artifact at all tiers ([ADR-0000](adr/0000-organizing-framework.md), [ADR-0008](adr/0008-ordering-stage.md), [ADR-0003](adr/0003-ranking-model.md)) |
+| Operability | Debuggable by query, not forensics | Named retrieval sources, deterministic ordering pass, per-tenant eval slices ([ADR-0002](adr/0002-candidate-generation.md), [ADR-0006](adr/0006-multi-tenancy.md)) |
+| Availability | Degraded, never empty | The degrade chain — with the one stated exception ranked above it |
+
+| Deliberately traded away | For | Where decided |
+|---|---|---|
+| Request-time model expressiveness (deep/sequence models, GPU) | Cost + auditability | The Bin (§4); [ADR-0003](adr/0003-ranking-model.md) |
+| Absolute availability at the gate | Compliance | [ADR-0005](adr/0005-rg-enforcement-point.md) fail-closed |
+| Short-term engagement maximisation | RG alignment + unbiased logs | Dithering cost, own-mix calibration, forbidden signals ([ADR-0008](adr/0008-ordering-stage.md), [ADR-0003](adr/0003-ranking-model.md)) |
+| Exploration efficiency | RG safety | Bandits deferred behind preconditions ([ADR-0009](adr/0009-evaluation-and-feedback-loops.md)) |
+| Cross-placement consistency | Freshness | [ADR-0001](adr/0001-offline-nearline-online-composition.md) consistency note |
+| One-store elegance | Staleness safety | Itemset store and validity KV kept separate |
+
+Conflicts this hierarchy has already resolved: the gate versus availability (compliance won),
+calibration versus pure ranking metrics (auditability won), dithering versus short-term CTR
+(measurement won).
+
 ## 2. The System on One Screen
 
 ```mermaid

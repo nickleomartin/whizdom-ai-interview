@@ -2,7 +2,10 @@
 
 Ten accepted decisions. [ADR-0000](0000-organizing-framework.md) is the meta-decision — read it
 first; it defines the stage×tier vocabulary the rest use and maps the assessment's topics to
-their owning records. Format: [template.md](template.md). Coined terms: [glossary](../GLOSSARY.md).
+their owning records. All ten share one quality hierarchy — **compliance & auditability > cost >
+evidence-gated freshness > evolvability > operability > availability** — named in
+[design.md §1](../design.md); when qualities conflict, the higher wins. Format:
+[template.md](template.md). Coined terms: [glossary](../GLOSSARY.md).
 
 | ADR | Title | The decision in one line | Grid position |
 |---|---|---|---|
