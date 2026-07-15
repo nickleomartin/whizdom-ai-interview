@@ -8,6 +8,8 @@ Latency budget: P99 <= 100ms end-to-end. Illustrative, not executable — see CL
 #
 #     # 1. Resolve context (platform services; cheap lookups)
 #     #    jurisdiction + consent flags + RG tier — all consumed, none derived here.
+#     #    A post_bet request additionally carries the just-placed bet context;
+#     #    account state includes the user's open positions.
 #     ctx = resolve_user_context(user_id, tenant_id)
 #
 #     # 2. Fetch the freshest itemset (KV lookup)
@@ -34,9 +36,12 @@ Latency budget: P99 <= 100ms end-to-end. Illustrative, not executable — see CL
 #
 #     # 5. Compose + respond
 #     #    Ordering rules were applied at build (ADR-0008); serve applies the seeded
-#     #    dither and final presentation (promotional slotting already respects
-#     #    consent + RG status from the pre-filter and gate).
-#     response = compose(result, placement)
+#     #    dither, final presentation (promotional slotting already respects consent
+#     #    + RG status), and the serve-time relevance filters: the user's OPEN
+#     #    POSITIONS are excluded on every placement; post_bet additionally excludes
+#     #    the just-bet market and prioritises same-fixture complements (a rule at
+#     #    v1-v3; a session feature for the re-ranker at v4).
+#     response = compose(result, placement, ctx)
 #
 #     # 6. Log the impression (the system's own flywheel; ADR-0004 rule 3)
 #     #    exact feature values + position + propensity per entry — this log IS the

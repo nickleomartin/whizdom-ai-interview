@@ -265,7 +265,9 @@ export const MODULES: Record<string, ModuleDef> = {
     what: 'Homepage carousel (~10–20 items), in-play sidebar (~5–15), post-bet suggestions (~3–5). Six item types compete in each list, which is why cross-type score calibration is a hard requirement.',
     why: 'Eligibility is placement-level, not just item-level — Germany’s in-play rules turn the sidebar off entirely for German users.',
     config: [
+      { label: 'Candidate relationship', value: 'one scored pool per user → three placement compositions (eligible slice + ordering config differ)' },
       { label: 'Per-placement config', value: 'ordering weights + caps — breadth on the carousel, live context in the sidebar, complements post-bet' },
+      { label: 'Serve-time filters', value: 'open positions excluded everywhere; post-bet also excludes the just-bet market (v1–3 rule; v4 session feature)' },
     ],
     adr: { id: 'ADR-0008', file: '0008-ordering-stage.md' },
   },

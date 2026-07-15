@@ -55,7 +55,11 @@ The composition rules, each with its purpose:
 **Per-placement composition differs by configuration, not code:** the carousel favours breadth
 (diversity caps bind tightly), the in-play sidebar favours the live context (starting-soon and
 live slots weighted up), post-bet favours complements to the just-placed bet — all expressed as
-weight and cap settings over the same six rules.
+weight and cap settings over the same six rules, each placement drawing its eligible slice of
+the one per-user pool ([ADR-0002](0002-candidate-generation.md)). Two serve-time relevance
+filters run alongside the gate's checks: the user's **open positions are excluded** on every
+placement, and post-bet additionally excludes the just-bet market and prioritises same-fixture
+complements (a rule at v1–v3; a session feature for the re-ranker at v4).
 
 **Cold-start behaviour:** own-mix calibration needs a long-run profile; for new users it falls
 back to the segment profile. The fallback list is by construction conservative — segment

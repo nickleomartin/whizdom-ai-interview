@@ -66,6 +66,11 @@ class ItemsetEntry:
 class Itemset:
     """The stored artifact: one user (or segment), one placement, one build.
 
+    Retrieval and scoring run ONCE per user; ordering composes the three
+    placement itemsets from placement-eligible slices of that one pool —
+    placements differ in slice, ordering config, and serve-time context
+    (ADR-0002 "One pool, three compositions").
+
     The three *_version fields make any served recommendation reproducible — the
     same bookkeeping serves the RG audit trail (ADR-0004, ADR-0005).
     """

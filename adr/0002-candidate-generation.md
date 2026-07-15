@@ -78,6 +78,26 @@ cases, not normal operation.
 activity-level grid (roughly 50–100 cells), assigned to users in the nightly batch; tenants may
 supply their own taxonomy via configuration ([ADR-0006](0006-multi-tenancy.md)).
 
+**One pool, three compositions.** Retrieval and scoring run once per user, not per placement:
+one blend pass builds the pool, one scoring pass covers the three placement contexts (placement
+is a model feature, so ~500 items cost ~1,500 cheap scores — still milliseconds). Ordering then
+composes three placement-specific itemsets from placement-eligible slices of the same pool:
+
+- **Homepage carousel** — the full pool, breadth-weighted.
+- **In-play sidebar** — live and starting-soon slots only; the whole placement can be OFF by
+  jurisdiction ([ADR-0005](0005-rg-enforcement-point.md)).
+- **Post-bet suggestions** — complement classes around the user's bet profile: same-fixture
+  other markets, accumulator extensions, co-engaged classes from EASE.
+
+Post-bet honesty note: a batch build cannot know a bet that has not happened. At v1–v3 the
+just-placed bet is known only at serve — the request carries it and the serve path applies it
+as a cheap *filter* over the stored post-bet itemset (same-fixture complements prioritised, the
+just-bet market excluded) — a rule, not inference, so serving stays a lookup plus a gate. At v4
+the just-bet context becomes a session feature and the re-ranker conditions on it properly. On
+every placement, the user's **open positions are excluded at compose** (recommending something
+already held is a wasted slot); post-bet applies this strictest — the just-bet market plus all
+open bets.
+
 **De-duplication and merge.** Sources overlap by design — a popular EPL fixture will surface
 from affinity, segment popularity, and starting-soon at once. The union is de-duplicated on a
 **canonical candidate key**: the slot key (fixture × market type) for slot-represented classes,

@@ -21,7 +21,10 @@ class FeatureGroup(str, Enum):
     ITEM_AND_CLASS = "item_and_class"    # offline batch; popularity refreshed nearline from v3
     LIVE_MARKET_STATE = "live_market"    # validity KV, <=5s lag; gate + slot resolution from v1,
                                          # scoring features only at v4
-    USER_SESSION = "user_session"        # request-time, v4 only; the only online feature store
+    USER_SESSION = "user_session"        # request-time, v4 only; the only online feature store.
+                                         # Serve-time ACCOUNT STATE (open positions, just-placed
+                                         # bet) is request context used as compose-time filters
+                                         # from v1 — not model features until v4
 
 
 @dataclass(frozen=True)

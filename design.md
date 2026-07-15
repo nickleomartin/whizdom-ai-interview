@@ -163,6 +163,20 @@ market-type, late-bound at serve) so builds survive goal-cycle ID churn. Itemset
 feature-set, and rule-pack versions — every served recommendation is reproducible
 ([stubs/itemset.py](stubs/itemset.py)).
 
+Retrieval and scoring run **once per user**; ordering composes **three placement-specific
+itemsets** from slices of the same pool — the placements differ like this:
+
+| | Homepage carousel | In-play sidebar | Post-bet suggestions |
+|---|---|---|---|
+| Job | Broad discovery entry point | Live-moment relevance | Complement the bet just placed |
+| Candidate slice (one per-user pool) | Full pool, breadth-weighted | Live + starting-soon slots only | Complement classes: same-fixture markets, acca extensions, co-engaged classes |
+| Served size | ~10–20 | ~5–15 | ~3–5 |
+| Freshness sensitivity | Batch is fine | Highest — validity + nearline critical | Batch build; personalised at serve |
+| Serve-time context | Account state only | Live validity + slot resolution dominate | The just-placed bet — a filter at v1–3, a session feature at v4 |
+| Exclusions | User's open positions | Open positions + anything suspended | The just-bet market + **all** open bets |
+| Eligibility quirk | Promo slots (consent-gated) | Placement can be OFF per jurisdiction (DE) | Promo rules apply to boost-adjacent items |
+| Ordering emphasis | Diversity caps bind tightly | Recency/liveness weighted up | Complement affinity weighted up |
+
 **Nearline path** ([ADR-0001](adr/0001-offline-nearline-online-composition.md) — the
 differentiator). A goal is coalesced per fixture; affected users are found by inverted index
 and rebuilt in priority order against a bounded budget: active sessions immediately, recent
