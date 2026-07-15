@@ -28,7 +28,9 @@ decision.
 ## Decision
 
 The system runs on three execution tiers. Serving is always a lookup plus the compliance gate, at
-every version. Freshness escalates in cost order — batch, then nearline, then online — and each
+every version. The three-tier composition is the target system; the v1→v4 roadmap is its
+staged delivery — the experiment gates sequence investment, they do not make the composition
+conditional. Freshness escalates in cost order — batch, then nearline, then online — and each
 escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md §7).
 
 1. **Offline (hourly batch).** Builds itemsets per user or segment. All four pipeline stages run
@@ -158,7 +160,8 @@ own roadmap version (v3) ahead of request-time re-ranking (v4).
 
 - **Offline only, with staleness compensation.** Rejected as the end state, because it cannot
   serve in-play relevance and in-play is the majority of volume in a mature book. Deliberately
-  *adopted* as v1–v2, however: it ships the measurement harness that justifies — or kills — each
+  *adopted* as v1–v2, however: it ships the measurement harness that justifies each
+  escalation's timing — or stops the spend early at a cheaper point than planned — for each
   later escalation.
 - **Two tiers: offline plus request-time re-ranking** (the classic "online re-ranks an offline
   pool"). Rejected: it forces user-independent market freshness through per-request inference.

@@ -140,7 +140,7 @@ Design must reflect these, not generic "RG filters":
 **Bottom-up unit sanity check (state in [ADR-0007](adr/0007-cost-model.md)):**
 - ~36M requests/month platform-wide — same derivation as the §1 throughput estimate (~1.2M/day)
 - Budget allows **~€0.55 per 1k requests**; KV lookup + CPU GBDT re-rank ≈ €0.05–0.20/1k → fits with 3–10x headroom
-- GPU deep-model serving ≈ 10–50x that unit cost → **ruled out for v1–v2**; revisit at v3 only if experiments justify
+- GPU deep-model serving ≈ 10–50x that unit cost → **ruled out for v1–v2**; reconsidered at v3+ only with experiment-proven need (Bin entry)
 - [ ] Peak load: Saturday football ~10x average request rate — size for peak, cost for average (autoscale/cache)
 
 ---

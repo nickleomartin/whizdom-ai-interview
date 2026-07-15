@@ -79,9 +79,11 @@ activity-level grid (roughly 50–100 cells), assigned to users in the nightly b
 supply their own taxonomy via configuration ([ADR-0006](0006-multi-tenancy.md)).
 
 **One pool, three compositions.** Retrieval and scoring run once per user, not per placement:
-one blend pass builds the pool, one scoring pass covers the three placement contexts (placement
-is a model feature, so ~500 items cost ~1,500 cheap scores — still milliseconds). Ordering then
-composes three placement-specific itemsets from placement-eligible slices of the same pool:
+one blend pass builds the pool, one scoring pass covers the placement contexts — placement is a
+model feature ([ADR-0003](0003-ranking-model.md) argues why), and each item is scored only for
+the placements whose slice it is eligible for (at most 3×, usually far less; live slots are
+sidebar-only), so a ~500-item pool still costs milliseconds. Ordering then composes three
+placement-specific itemsets from placement-eligible slices of the same pool:
 
 - **Homepage carousel** — the full pool, breadth-weighted.
 - **In-play sidebar** — live and starting-soon slots only; the whole placement can be OFF by

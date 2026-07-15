@@ -12,8 +12,9 @@ lookup plus a fail-closed compliance gate. Three execution tiers instead of the 
 because "freshness" is two different problems: live market state (odds, suspensions, goals) is
 user-independent — one event invalidates many users' lists at once, so it is served by
 event-triggered **nearline** recomputation, paid once per event; session intent (what this user
-did seconds ago) is the only signal that genuinely needs request-time inference, and arrives
-last (v4), behind an experiment gate. A revenue-derived cost ceiling (~€19k/month) makes this
+did seconds ago) is the only signal that genuinely needs request-time inference, and is served
+by a budget-boxed request-time re-ranker. That is the target system; it is delivered in four
+evidence-gated stages (§2). A revenue-derived cost ceiling (~€19k/month) makes this
 offline-heavy shape a derived necessity, not a taste.
 
 **Interactive companion:** [design explorer](https://nickleomartin.github.io/whizdom-ai-interview/)
@@ -34,11 +35,14 @@ an online-heavy design was rejected on the cost ceiling ([ADR-0007](adr/0007-cos
 ~€19k/month buys lookups and CPU re-ranks, not GPU inference at 300 requests per second.
 
 **What I would validate first if building this for real:** the staleness-cost assumption the
-whole escalation ladder rests on. v1's logs answer it cheaply with two metrics — CTR decay
-versus itemset age, and catalog-coverage staleness (engagement landing on markets born after
-the last build) — plus the empirical check on the ~10x multiple itself: sidebar reads per user
-per event window, logged from day one. If staleness turns out not to cost engagement, v3 and v4
-never get built — which is the point of gating every escalation on evidence.
+delivery sequence rests on. v1's logs answer it cheaply with two metrics — CTR decay versus
+itemset age, and catalog-coverage staleness (engagement landing on markets born after the last
+build) — plus the empirical check on the ~10x multiple itself: sidebar reads per user per event
+window, logged from day one. The gates protect the budget in both directions: evidence confirms
+the target and each escalation proceeds justified, or it surprises us early and the spend stops
+at a cheaper point than planned. The brief's own product goals — in-play placements, live-odds
+incorporation — make the live-state tiers near-certain to be needed; what the gates sequence is
+investment, not whether the design exists.
 
 ### What this design is built for — and what it trades away
 
@@ -133,9 +137,11 @@ can:
 | Session intent (viewed seconds ago) | seconds | per-user, per-moment | **online** — the only layer that needs request-time inference | v4 |
 | Causal & sequential effects | cross-session | — | deferred | post-v4 |
 
-**The roadmap** — same four stages (Retrieval → Filtering → Scoring → Ordering,
-[ADR-0000](adr/0000-organizing-framework.md)) at every version; only the tier placements evolve,
-each escalation gated on evidence that the previous version's limitation costs engagement:
+**The delivery plan** — the tables above describe the target system; the roadmap below is how
+it is built. Same four stages (Retrieval → Filtering → Scoring → Ordering,
+[ADR-0000](adr/0000-organizing-framework.md)) at every version; only the tier placements arrive
+in cost order, each escalation gated on evidence that the previous version's limitation costs
+engagement:
 
 | Stage | v1 | v2 | v3 (nearline) | v4 (online) |
 |---|---|---|---|---|
@@ -186,7 +192,9 @@ once where per-request pays every poll, and the gap peaks exactly when it matter
 that invalidates the itemsets also triggers the refresh storm). This is how storms are absorbed
 off the request path ([stubs/nearline_refresh.py](stubs/nearline_refresh.py)).
 
-**Online path** ([stubs/serve_path.py](stubs/serve_path.py)). Six steps inside 100ms: resolve
+**Online path** ([stubs/serve_path.py](stubs/serve_path.py)). Live from v1 — the compliance
+gate, slot resolution, and serve-time filters run on every request; v4 adds inference (the
+session re-ranker) to an already-live path. Six steps inside 100ms: resolve
 context → fetch freshest itemset → **compliance gate** (validity, slot resolution, live RG,
 rule-pack version drift; every suppression logged with rule ID;
 [stubs/compliance_gate.py](stubs/compliance_gate.py)) → optional v4 re-rank (≤30ms, falls back
@@ -203,7 +211,9 @@ own *what can* be recommended; online owns *whether it may be shown right now* a
 **Modelling choices** ([ADR-0003](adr/0003-ranking-model.md), [ADR-0002](adr/0002-candidate-generation.md)).
 One pointwise GBDT, calibrated per item-type × placement (18 isotonic cells) because six item
 types compete in one list and an uncalibrated model hands composition to whichever type
-inflates. Labels from impressions only (organic exposure has no propensity and carries the
+inflates. Placement enters scoring as a context feature — the same item has different
+propensity per surface, and impressions are logged per placement so it is learnable
+([ADR-0003](adr/0003-ranking-model.md)). Labels from impressions only (organic exposure has no propensity and carries the
 operator UI's bias — organic behaviour feeds *features and retrieval* instead); label =
 slip-or-bet, clicks rejected as an RG liability. **Forbidden as positive signals anywhere**:
 deposit velocity, loss-recovery, stake escalation. Cold start: segment priors at every level.

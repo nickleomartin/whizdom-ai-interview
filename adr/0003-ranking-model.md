@@ -45,6 +45,14 @@ Notes on handling heterogeneity with a single model (explored via the `prototype
 **A single gradient-boosted decision tree (GBDT) model — LightGBM or equivalent — predicting a
 pointwise, calibrated P(engage | user, item, placement, context), introduced at v2.**
 
+- **Why placement is in the feature vector.** The same item has genuinely different engagement
+  propensity per surface: a live next-goal selection is high-propensity in the in-play sidebar
+  mid-match and near-zero on the next morning's carousel; an accumulator does well on the
+  carousel and badly post-bet. Impressions are logged with their placement, so this is directly
+  learnable signal. Both alternatives are worse: placement-blind scoring produces one ranking
+  everywhere, leaving ordering config to hand-tune what the model can learn; per-placement
+  models fragment the training data three ways ([ADR-0008](0008-ordering-stage.md), alternatives).
+
 - **Label.** "Engage" means a bet-slip add or a placed bet attributable to the impression,
   with placed bets weighted higher. Raw clicks are deliberately not the label: click-optimised
   ranking drifts toward flashy-but-irrelevant items, and in this domain that drift is an RG
