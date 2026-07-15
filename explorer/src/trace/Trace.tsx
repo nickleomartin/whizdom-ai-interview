@@ -50,14 +50,10 @@ export function Trace() {
     return () => clearTimeout(t)
   }, [playing, step])
 
-  function run() {
-    setStep(1)
-    setPlaying(true)
-  }
   function pick(id: string) {
     setPersonaId(id)
-    setStep(0)
-    setPlaying(false)
+    setStep(1)
+    setPlaying(true)
   }
 
   const served: TraceItem[] = ITEMSET.filter((i) => !suppressedIds.has(i.id))
@@ -67,7 +63,7 @@ export function Trace() {
       <div className="panel">
         <h2 className="panel-title">Follow one request</h2>
         <span className="hint">
-          Pick a persona, run the serve path. Same stored itemset every time — the gate decides
+          Click a persona — the request runs immediately. Same stored itemset every time — the gate decides
           what may be shown to <em>this</em> user, right now, and logs why not.
         </span>
 
@@ -87,11 +83,6 @@ export function Trace() {
                   </div>
                 </button>
               ))}
-            </div>
-            <div className="tracebtns" style={{ marginTop: 12 }}>
-              <button className="primary" onClick={run} disabled={playing}>
-                {step === 0 ? '▶ Run request' : '↻ Run again'}
-              </button>
             </div>
           </div>
 
