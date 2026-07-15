@@ -9,7 +9,7 @@ type View = 'doc' | 'diagram' | 'storm' | 'trace'
 
 export default function App() {
   const [view, setView] = useState<View>('doc')
-  const [version, setVersion] = useState<Version>(3)
+  const [version, setVersion] = useState<Version>(4)
 
   return (
     <div className="app">

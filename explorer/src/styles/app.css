@@ -952,3 +952,9 @@ h2.panel-title {
   border-radius: 4px;
   padding: 3px 10px;
 }
+
+/* embedded schematic inside a doc splice: give the SVG the full width;
+   the detail drawer flows below instead of stealing a 360px column */
+.splice .diagram-wrap { grid-template-columns: minmax(0, 1fr); }
+.splice .drawer { position: static; max-height: none; }
+.splice .diagram-svg-holder svg { min-width: 900px; }

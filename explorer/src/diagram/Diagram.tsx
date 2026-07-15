@@ -25,7 +25,7 @@ function subForVersion(id: string, sub: string, version: Version): string {
 export function Diagram({ version: versionProp, embedded }: { version?: Version; embedded?: boolean }) {
   const [selected, setSelected] = useState<string | null>('nearline')
   const [activeStage, setActiveStage] = useState<Stage | null>(null)
-  const [ownVersion, setOwnVersion] = useState<Version>(3)
+  const [ownVersion, setOwnVersion] = useState<Version>(4)
   const version = versionProp ?? ownVersion
   const vdef = VERSIONS[version - 1]
 
