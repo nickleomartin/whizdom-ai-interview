@@ -41,6 +41,8 @@ def rerank(
     - SIDE-EFFECT BOUNDARIES. Reads: the model artifact and `session_features`.
       Writes: nothing. Impression logging (with per-entry propensity reflecting any
       re-ordering) is the serve path's job after composition, not this function's.
+      When used_fallback=True the logged propensities reflect the FALLBACK order —
+      counterfactual evaluation must filter or reweight fallback impressions.
     - SAME MODEL ARTIFACT as the offline and nearline tiers (ADR-0003) — only the
       available feature groups differ; missing groups route natively in the GBDT.
     """

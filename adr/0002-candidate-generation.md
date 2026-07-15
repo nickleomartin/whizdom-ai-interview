@@ -67,11 +67,16 @@ union before anything is scored.
 
 **Pool sizing.** Serving needs roughly 40–50 items per user across the three placements
 (carousel ~10–20, in-play sidebar ~5–15, post-bet ~3–5). The blend targets **400–600 unique
-candidates after de-duplication, capped at 1,000** (indicatively: affinity ~200, segment
-popularity ~150, starting-soon/live ~150 slots, promotions ~20, class affinity ~100). Roughly
-ten times the served set gives the ordering stage and the serve-time gate enough headroom for
-suppressions, failed slot resolutions, and diversity requirements, while keeping scoring cost
-trivial — a few milliseconds per user per build on CPU.
+candidates after de-duplication** (indicatively: affinity ~200, segment popularity ~150,
+starting-soon/live ~150 slots, promotions ~20, class affinity ~100). Roughly ten times the
+served set gives the ordering stage and the serve-time gate enough headroom for suppressions,
+failed slot resolutions, and diversity requirements, while keeping scoring cost trivial — a few
+milliseconds per user per build on CPU. The 1,000-item cap is a safety limit for pathological
+cases, not normal operation.
+
+**Segments**, referenced throughout as the cold-start and fallback unit, are a sport ×
+activity-level grid (roughly 50–100 cells), assigned to users in the nightly batch; tenants may
+supply their own taxonomy via configuration ([ADR-0006](0006-multi-tenancy.md)).
 
 **De-duplication and merge.** Sources overlap by design — a popular EPL fixture will surface
 from affinity, segment popularity, and starting-soon at once. The union is de-duplicated on a

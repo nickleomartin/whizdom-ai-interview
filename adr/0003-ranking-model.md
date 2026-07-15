@@ -108,8 +108,10 @@ pointwise, calibrated P(engage | user, item, placement, context), introduced at 
     Isotonic over Platt scaling because tree-ensemble score distortions are not sigmoid-shaped,
     and per-cell data volume is ample at our impression rates.
   - **Data:** a time-based held-out slice of recent impressions (never the training rows),
-    refreshed at every retrain. Sparse cells fall back hierarchically: cell → item type →
-    global calibrator, with the fallback level recorded.
+    refreshed at every retrain. At the stated volumes (~12–24M impressions/day, engagement in
+    the low percent), each of the 18 cells sees tens of thousands of positives per day — ample
+    for isotonic fits. Sparse cells fall back hierarchically: cell → item type → global
+    calibrator, with the fallback level recorded.
   - **First correction, then isotonic:** the known negative-downsampling rate is corrected
     analytically first (a closed-form prior shift), so isotonic only has to fix genuine model
     distortion, not sampling arithmetic.

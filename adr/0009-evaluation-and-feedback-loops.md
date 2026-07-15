@@ -40,7 +40,7 @@ is training-data control.
 | Classifier sanity | AUC + per-cell calibration error (the [ADR-0003](0003-ranking-model.md) ECE machinery) | Calibration is a first-class requirement, not a nice-to-have |
 | Baselines | Every candidate model must beat (a) segment popularity and (b) the logistic-regression shadow baseline, offline, before any A/B | If GBDT cannot clearly beat LR, its complexity is not yet earning its keep |
 | Holdout | Time-based splits only (e.g. train weeks 1–6, validate 7, test 8), never random | Random splits leak temporal signal — the model sees the future of the fixtures it is tested on |
-| Counterfactual | From v2: self-normalised inverse-propensity scoring (SNIPS) over the dithered impression logs, recsys surfaces only | The seeded dithering ([ADR-0008](0008-ordering-stage.md)) exists precisely to make this estimator usable; SNIPS over plain IPS for variance control |
+| Counterfactual | From v2: self-normalised inverse-propensity scoring (SNIPS) over the dithered impression logs, recsys surfaces only | The seeded dithering ([ADR-0008](0008-ordering-stage.md)) exists precisely to make this estimator usable; SNIPS over plain IPS for variance control. Honest caveat: the dither magnitude must produce enough propensity variance for SNIPS to converge — validated at launch, plain IPS as fallback if propensities cluster |
 | Cold-start slice | All offline metrics reported separately for the <5-interaction user slice, plus the share of new users receiving personalised content vs segment default | The design must work at both ends of the history distribution (TASKS.md §2) |
 
 **Online evaluation:**
@@ -49,7 +49,7 @@ is training-data control.
 |---|---|---|
 | Primary metric | Attributed bet conversion per session | Closest to platform value that is still user-initiated; raw CTR explicitly rejected — click-chasing is an RG liability here ([ADR-0003](0003-ranking-model.md)) |
 | Secondary | Session depth; recommendation-attributed share of slips | Reads engagement quality, not just the conversion moment |
-| Randomisation | User-level, stratified per tenant; never session-level | Itemsets persist across sessions and the model learns from its own exposure — session-level splits contaminate both arms (SUTVA violation) |
+| Randomisation | User-level, stratified per tenant; never session-level | Itemsets persist across sessions and the model learns from its own exposure — session-level splits contaminate both arms (SUTVA violation). Itemsets are tagged with the experiment arm at build, and a nearline rebuild re-scores with the arm's own model — fixture-cohort rebuilds never leak treatment across arms |
 | Experiment duration | Whole weeks only, minimum two weekend cycles | Sportsbook traffic is violently weekly-seasonal; a Tuesday–Thursday experiment measures a different product |
 | Long-term measurement | The permanent 1–2% holdout cohort ([ADR-0003](0003-ranking-model.md)) never receives new rankers; retention and value effects read over months | Long-term effects are measured before anything optimises for them |
 | Guardrails | The pathology signals from Part 2, plus: deposit velocity (monitor-only — never an objective), per-tenant metric slices, serve latency SLO | Regression on any guardrail blocks shipping, regardless of primary-metric wins, from v1 |

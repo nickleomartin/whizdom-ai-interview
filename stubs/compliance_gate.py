@@ -41,9 +41,11 @@ def compliance_gate(itemset: Itemset, user_context: dict) -> Optional[GateResult
 
     Contract:
 
-    - VALIDITY: drop entries whose market is suspended/expired (validity KV,
-      <=5s lag); resolve slots to the currently open market ID — an unresolvable
-      slot is skipped, not an error.
+    - SLOT RESOLUTION: each ItemRef in slot mode (fixture_id x market_type) is
+      late-bound to the currently open market ID via the validity KV; an
+      unresolvable slot (no open market) is skipped, not an error.
+    - VALIDITY: drop entries whose concrete market is suspended/expired
+      (validity KV, <=5s lag).
     - LIVE RG: apply session-level RG state (e.g. a deposit-limit trip minutes ago)
       and suppress promotional entries for at-risk or non-consented users.
     - VERSION DRIFT: if the current rule-pack version differs from

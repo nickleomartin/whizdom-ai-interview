@@ -42,7 +42,9 @@ The composition rules, each with its purpose:
 4. **Promotional slotting.** Promotional items (merge-proof tag, [ADR-0002](0002-candidate-generation.md)) appear only in
    designated slots, capped as a share of the list, and only for users whose consent and RG
    status permit promotional content ([ADR-0005](0005-rg-enforcement-point.md)). A promotion never displaces the top organic
-   position.
+   position. If the gate suppresses a slotted promotion at serve, the slot refills with the
+   next eligible promotional item, else stays organic; for at-risk users the promotional cap
+   is pre-set to zero — nothing competes for the slot.
 5. **New-item floor.** A small fixed share of each list (one to two positions) is reserved for
    items the user has not been shown before, drawn from the gated pool.
 6. **Seeded dithering.** Ranks receive a small deterministic-seeded perturbation, logged in the

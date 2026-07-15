@@ -68,7 +68,10 @@ are the only events this system produces.
    warehouse is the bootstrap for v2's first model and the fallback for backfills.
 4. **Versioned, all the way down.** The contract carries a feature-set version; every itemset
    records the feature-set version, model version, and rule-pack version it was built with. Any
-   recommendation is reproducible from its versions.
+   recommendation is reproducible from its versions. This is also the rollback mechanism: each
+   model version has a lifecycle (live / deprecated), the serve path rejects itemsets built
+   with deprecated versions (falling into the ordinary degrade chain), and a rollback simply
+   re-marks the prior version live — version-mismatch rejections are logged for audit.
 5. **Missing features degrade, never block.** Serving tolerates an absent feature group (the
    model handles missing values natively — a GBDT property, [ADR-0003](0003-ranking-model.md)); a feature-store outage
    downgrades ranking quality but never takes serving down. The one exception stays the

@@ -84,7 +84,8 @@ affected user on every event approaches all-users × all-events on a busy Saturd
 "streaming full recompute" alternative), and the tier's economics collapse.
 
 **Which users get recomputed — the targeting policy.** "Affected" is an index lookup, not a
-scan: itemsets are indexed by the fixtures and slots they contain. But on a busy Saturday the
+scan: an inverted index (fixture/slot → user IDs) is written alongside every itemset write and
+cleaned lazily — a stale index entry is a no-op at query time. On a busy Saturday the
 affected set for a big fixture can be a large share of all active users, so affected users are
 recomputed in priority order against a bounded worker budget:
 
@@ -98,6 +99,16 @@ recomputed in priority order against a bounded worker budget:
 If the budget saturates (many simultaneous fixtures), tier 2 degrades gracefully toward the
 batch cadence while tier 1 holds — and the validity KV at the gate keeps every user safe from
 suspended markets in the meantime, whatever their recompute tier.
+
+Worked capacity example: a rebuild is roughly 50ms of CPU per user (pre-filter + score ~500
+candidates + order), so a few hundred active-session users complete in seconds on a handful of
+workers; a worst-case 50k affected users on 20 workers is ~2 minutes — which is exactly the
+stated tier-2 degrade-toward-batch behaviour, not a failure.
+
+One consistency note: placements requested moments apart may be served from different refreshes
+— the design favours freshness over cross-placement consistency, and the gate runs per request
+so nothing invalid surfaces either way; de-duplicating across placements is the front-end's
+concern.
 
 **Why per-event beats per-request — the arithmetic.** Live market state is user-independent: one
 goal invalidates the itemsets of every user holding that fixture's markets. The two ways to buy

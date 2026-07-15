@@ -57,7 +57,9 @@ class ItemsetEntry:
     rank: int                    # position after ordering (ADR-0008), before serve-time dithering
     sources: frozenset[str]      # provenance kept through de-dup — a ranking feature (ADR-0002)
     is_promotional: bool         # merge-proof: survives any de-dup merge (ADR-0002, RG rules key off it)
-    propensity: float            # P(shown at this rank) incl. dithering — counterfactual eval needs it
+    propensity: float            # P(shown at this rank), computed at build BEFORE serve-time
+                                 # dithering; the serve path logs the post-dither value with
+                                 # each impression — counterfactual eval consumes the logged one
 
 
 @dataclass(frozen=True)
