@@ -197,7 +197,7 @@ gate, slot resolution, and serve-time filters run on every request; v4 adds infe
 session re-ranker) to an already-live path. Six steps inside 100ms: resolve
 context → fetch freshest itemset → **compliance gate** (validity, slot resolution, live RG,
 rule-pack version drift; every suppression logged with rule ID;
-[stubs/compliance_gate.py](stubs/compliance_gate.py)) → optional v4 re-rank (≤30ms, falls back
+[stubs/compliance_gate.py](stubs/compliance_gate.py)) → session re-rank (v4, ≤30ms, falls back
 to the gated order; [stubs/online_reranker.py](stubs/online_reranker.py)) → compose → log the
 impression asynchronously. That log *is* the training set — the flywheel.
 

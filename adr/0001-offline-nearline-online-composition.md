@@ -31,7 +31,7 @@ The system runs on three execution tiers. Serving is always a lookup plus the co
 every version. The three-tier composition is the target system; the v1→v4 roadmap is its
 staged delivery — the experiment gates sequence investment, they do not make the composition
 conditional. Freshness escalates in cost order — batch, then nearline, then online — and each
-escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md §7).
+escalation must pass an experiment gate.
 
 1. **Offline (hourly batch).** Builds itemsets per user or segment. All four pipeline stages run
    here at every version: candidate retrieval, the eligibility pre-filter, scoring (from v2), and
@@ -43,10 +43,11 @@ escalation must pass an experiment gate (this is the v1→v4 roadmap, TASKS.md �
    Serving is untouched: it remains a lookup, so nearline adds freshness without adding any
    request-time compute.
 
-3. **Online (request-time).** Always runs the compliance gate — cheap rule-and-lookup evaluation
-   (validity lookups plus rule-pack checks, [ADR-0005](0005-rg-enforcement-point.md)), never
-   model inference — present from v1. From v4 it may additionally re-rank the itemset using
-   session features, within a 30ms compute budget.
+3. **Online (request-time).** Two components. The **compliance gate** — cheap rule-and-lookup
+   evaluation (validity plus rule-pack checks, [ADR-0005](0005-rg-enforcement-point.md)), never
+   model inference — runs on every request from v1. The **session re-ranker** re-orders the
+   gated itemset using session features within a 30ms compute budget, falling back to the gated
+   order on breach; it is the tier's model-inference component, delivered at v4.
 
 **The composition contract.** Serving consumes the freshest available itemset (the nearline
 refresh if one exists, otherwise the last batch build), applies the compliance gate, and may re-order
@@ -143,8 +144,8 @@ own roadmap version (v3) ahead of request-time re-ranking (v4).
 - Request rate and freshness are decoupled. An invalidation storm — one goal suspending hundreds
   of markets across every tenant — is absorbed by nearline workers off the request path. The
   serving path never gets busier because the match got exciting.
-- The v4 request-time re-rank becomes an optional, bounded optimisation with a guaranteed
-  fallback, rather than a load-bearing component.
+- The session re-ranker is a bounded component with a guaranteed fallback — never
+  load-bearing: serving is whole without it, at every version.
 - Cost scales with event rate (nearline) plus request rate (cheap lookups), instead of request
   rate multiplied by model inference cost.
 - Three tiers share the same stage logic, which creates a real risk of divergence. This is why

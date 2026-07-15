@@ -234,7 +234,7 @@ export const MODULES: Record<string, ModuleDef> = {
     title: 'Serve path',
     tier: 'online',
     arrivesAt: 1,
-    what: 'Six steps inside P99 ≤ 100ms: resolve context → fetch freshest itemset → compliance gate → optional re-rank (v4) → compose → log the impression asynchronously. The impression log is the training set and the counterfactual-evaluation input.',
+    what: 'Six steps inside P99 ≤ 100ms: resolve context → fetch freshest itemset → compliance gate → session re-rank (v4) → compose → log the impression asynchronously. The impression log is the training set and the counterfactual-evaluation input.',
     why: 'Serving stays a lookup plus a gate at every version — request rate is decoupled from freshness by construction.',
     config: [
       { label: 'Latency', value: 'P99 ≤ 100ms end-to-end' },

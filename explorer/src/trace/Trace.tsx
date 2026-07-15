@@ -20,7 +20,7 @@ const STEPS: { title: string; stage?: Stage; stageNote?: string }[] = [
     stage: 'filtering',
   },
   {
-    title: 'Optional re-rank (v4) — session features, ≤30ms, fallback to gated order',
+    title: 'Session re-rank (v4) — session features, ≤30ms, fallback to gated order',
     stage: 'scoring',
   },
   {
