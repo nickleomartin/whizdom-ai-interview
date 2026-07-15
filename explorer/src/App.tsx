@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { Diagram } from './diagram/Diagram'
 import { Storm } from './storm/Storm'
 import { Trace } from './trace/Trace'
+import { DesignDoc } from './docview/DesignDoc'
 import { link, type Version } from './content/modules'
 
-type View = 'diagram' | 'storm' | 'trace'
+type View = 'doc' | 'diagram' | 'storm' | 'trace'
 
 export default function App() {
-  const [view, setView] = useState<View>('diagram')
+  const [view, setView] = useState<View>('doc')
   const [version, setVersion] = useState<Version>(3)
 
   return (
@@ -23,13 +24,17 @@ export default function App() {
         </nav>
       </header>
       <p className="tagline">
-        Interactive companion to the design document. The rule underneath the whole design:
-        compute is paced by how fast its inputs change, not by how often its results are read.
-        Everything here is a summary — the markdown is canonical.
+        The design document, rendered from its canonical markdown with live figures — plus
+        focused views for the schematic, the invalidation-storm demo, and the request trace.
+        The rule underneath the whole design: compute is paced by how fast its inputs change,
+        not by how often its results are read.
       </p>
 
       <div className="controlbar">
         <div className="tabs">
+          <button className={view === 'doc' ? 'active' : ''} onClick={() => setView('doc')}>
+            Design doc
+          </button>
           <button className={view === 'diagram' ? 'active' : ''} onClick={() => setView('diagram')}>
             Schematic
           </button>
@@ -55,6 +60,7 @@ export default function App() {
         )}
       </div>
 
+      {view === 'doc' && <DesignDoc />}
       {view === 'diagram' && <Diagram version={version} />}
       {view === 'storm' && <Storm />}
       {view === 'trace' && <Trace />}

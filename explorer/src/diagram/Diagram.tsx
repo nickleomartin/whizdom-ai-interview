@@ -22,9 +22,11 @@ function subForVersion(id: string, sub: string, version: Version): string {
   return sub
 }
 
-export function Diagram({ version }: { version: Version }) {
+export function Diagram({ version: versionProp, embedded }: { version?: Version; embedded?: boolean }) {
   const [selected, setSelected] = useState<string | null>('nearline')
   const [activeStage, setActiveStage] = useState<Stage | null>(null)
+  const [ownVersion, setOwnVersion] = useState<Version>(3)
+  const version = versionProp ?? ownVersion
   const vdef = VERSIONS[version - 1]
 
   return (
@@ -33,8 +35,21 @@ export function Diagram({ version }: { version: Version }) {
         <h2 className="panel-title">System schematic — 4 stages × 3 tiers</h2>
         <span className="hint">
           Click any module for its responsibilities, config surface, and the ADR that owns it.
-          Use the version control (top right) to watch the architecture arrive in stages.
+          Use the version control to watch the architecture arrive in stages.
         </span>
+
+        {embedded && (
+          <div className="vslider" style={{ marginTop: 10 }}>
+            <span className="vlabel">roadmap version</span>
+            <div className="vbtns">
+              {([1, 2, 3, 4] as Version[]).map((v) => (
+                <button key={v} className={version === v ? 'active' : ''} onClick={() => setOwnVersion(v)}>
+                  v{v}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="stage-legend">
           <span className="stage-legend-label">the four stages — hover to trace one across tiers:</span>

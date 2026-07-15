@@ -15,7 +15,19 @@ npm run build    # type-check + bundle (the validation gate)
 Vite + React 18 + TypeScript, no runtime dependencies beyond React; all diagrams are
 hand-rolled SVG.
 
-## The three views
+## The four views
+
+- **Design doc** (landing) — the canonical `design.md`, imported raw at build time and rendered
+  with live figures spliced in at stable markers: the mermaid block becomes the interactive
+  schematic, the nearline answer gains the storm demo, the placement table gains prototype-styled
+  placement mock-ups, and the online-path answer gains the request trace. Zero drift by
+  construction — the text IS design.md at the same commit.
+  **Maintenance note**: the splices key on markers in design.md (the mermaid fence, the
+  `| Stage | v1 |` table header, the `| | Homepage carousel |` table header, and paragraphs
+  starting `**Nearline path**` / `**Online path**`). If design.md restructures, the doc still
+  renders — missing splices are skipped with a console.warn — but check `src/docview/DesignDoc.tsx`.
+
+## The other three views
 
 - **Schematic** — the 4-stage × 3-tier grid as a clickable diagram. Every module opens a drawer
   with its responsibilities, config surface, and deep links to the owning ADR and stub. The
