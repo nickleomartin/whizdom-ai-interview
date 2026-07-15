@@ -1,8 +1,10 @@
-# TASKS — Decision Process, Assumptions, and Architecture Checklist
+# TASKS — Provenance: Requirements, Assumptions, and the Decision Trail
 
-This file is the working document for arriving at a mature architecture. Work top to bottom.
-Each design decision maps to an ADR in `adr/`. The design document (`design.md`) is populated
-only after this process is complete.
+**Purpose**: this is the working document the design grew out of — the source material for
+design.md and the ADRs. Read it to trace a decision's origin: the sourced market/regulatory
+research (§2), the decision sequence that ordered the ADRs (§4), and the full research
+adoptions-and-Bin trail (§5c) live only here. Sections superseded by canonical homes have been
+reduced to pointers.
 
 ---
 
@@ -143,89 +145,11 @@ Design must reflect these, not generic "RG filters":
 
 ---
 
-## 3. Design Decisions (each maps to an ADR)
+## 3. Design Decisions
 
-### [ADR-0001](adr/0001-offline-nearline-online-composition.md): Offline/Nearline/Online Composition Strategy
-- Question: Which execution tier (batch / nearline event-triggered / request-time) runs each of the 4 stages, at each version?
-- Options: (a) offline-only with staleness compensation, (b) offline + nearline refresh [v3 target],
-  (c) offline + nearline + online re-rank [v4 target], (d) online-heavy (rejected: cost)
-- Decision: freshness escalates in cost order batch → nearline → online, each step experiment-gated; nearline
-  (Netflix 3-tier blueprint via [Amatriain](https://amatria.in/blog/RecsysArchitectures)) carries
-  live-market-state freshness at ~10x less cost than request-time inference because market events amortise
-  across affected users
-- Decision criteria: how much pool invalidity is user-independent (nearline-fixable: suspensions, odds swings)
-  vs session-specific (online-only: intent shift)?
-
-### [ADR-0002](adr/0002-candidate-generation.md): Candidate Generation Approach
-- Question: How do we generate the ~100-500 candidate markets per user before ranking?
-- Options: (a) heuristic multi-source blend (sport affinity + popularity + starting-soon),
-  (b) collaborative filtering (user-user, item-item), (c) two-tower embedding model, (d) hybrid
-- Constraints: cold-start prevalence, embedding freshness for live markets, training infra available
-- Scale reality check ([Amatriain](https://amatria.in/blog/RecsysArchitectures)): candidate selection is
-  *optional* at small catalog scale — active catalog is ~thousands of markets, not millions;
-  scoring-all-eligible is feasible. Retrieval must justify existing at all before justifying being clever
-- Simple, defensible choice preferred over ambitious one we can't defend
-
-### [ADR-0003](adr/0003-ranking-model.md): Ranking Model
-- Question: What model ranks the ~100-500 candidates to top-K for serving?
-- Options: (a) GBDT (XGBoost/LightGBM) on hand-crafted features, (b) neural ranker, (c) pointwise LR, (d) learned LTR
-- Constraints: feature availability at serving time, training cadence, explainability for RG audit
-- What features are available offline vs online?
-
-### [ADR-0004](adr/0004-feature-store-contract.md): Feature Store Contract
-- Question: What is the shared contract between offline training and online serving?
-- Decide: which features are pre-computed (batch, in itemset), which are fetched live (odds, session),
-  which are derived at request time
-- Requirement (adopted pattern): same feature store + identical transforms in training and serving — train-serve
-  skew is a stated failure mode, not an afterthought
-- This determines the offline/online boundary precisely
-
-### [ADR-0005](adr/0005-rg-enforcement-point.md): RG Enforcement Point
-- Question: Where in the pipeline do RG and eligibility constraints apply?
-- Options: (a) pre-filter candidates before ranking, (b) post-rank hard removal,
-  (c) both — two-point filtering [decision], (d) soft penalty in ranking score
-- Decision shape: (i) eligibility pre-filter at itemset build (jurisdiction rule packs, RG tier — slow-moving,
-  prunes scoring spend); (ii) validity + RG compliance gate at serve (suspended markets, live limit trips —
-  fast-moving, last word before user). Per [Amatriain's critique](https://amatria.in/blog/RecsysArchitectures)
-  of single-stage filtering: different logic types belong at different points
-- Rule packs operate at THREE granularities (regulatory grounding above): **placement** (DE: in-play sidebar off),
-  **market-type** (DE: live-betting classes banned), **item×user** (at-risk flag ⇒ suppress promotional recs;
-  UK cross-product ban). Self-exclusion registry check assumed upstream of recsys entirely
-- Constraint: RG must be auditable — hard filter, not soft penalty alone; compliance gate is the auditable choke
-  point, logging every suppression with rule ID
-
-### [ADR-0006](adr/0006-multi-tenancy.md): Multi-Tenancy Model
-- Question: One pooled model across tenants, or per-tenant models? Data siloed or shared?
-- Options: (a) pooled model + siloed data + tenant features [leaning], (b) per-tenant models,
-  (c) pooled with opt-in cross-tenant training, (d) tiered — pooled default, per-tenant for premium operators
-- Decision criteria: new-tenant cold-start, N× training cost, contractual/GDPR data-sharing limits,
-  tenant jurisdiction mix, operator customisation demands
-- Leaning: pooled model + siloed data — best cold-start, one training pipeline; present per-tenant as
-  rejected-with-criteria
-
-### [ADR-0007](adr/0007-cost-model.md): Cost Model & Serving Budget
-- Question: What cost ceiling constrains architecture choices, and how is it derived?
-- Top-down: ~10 tenants × €1-5M GGR/month; platform take ~10%; infra ≤15% of platform revenue;
-  recsys ≤5% of infra → ~€1-4k/month/tenant
-- Bottom-up: cost per 1k recs — offline path (batch compute amortised + KV lookup ≈ negligible per request)
-  vs online path (feature store read + CPU GBDT inference)
-- Consequences: CPU-only serving; offline-heavy composition; online path limited to cheap re-rank of
-  precomputed pool; cache aggressively; 10x Saturday peak sizing
-- This ADR is *why* the architecture is offline-heavy — cost, not just latency
-
-### [ADR-0008](adr/0008-ordering-stage.md): Ordering Stage Composition (added 2026-07-14)
-- Question: How is the final ranked list composed from the gated, calibrated candidate list?
-- Decision: explicit utility composition, six ordered rules (utility sort → diversity caps →
-  own-mix calibration → promo slotting → new-item floor → seeded dithering), all weights and
-  caps as versioned tenant-tunable configuration. Per-placement behaviour is config, not code
-
-### [ADR-0009](adr/0009-evaluation-and-feedback-loops.md): Feedback-Loop Control (added 2026-07-14)
-- Question: Where do recommender feedback loops get owned — mechanisms, monitoring, exploration policy?
-- Decision: a system-property record mapping the four pathologies (popularity amplification,
-  chasing losses, RG-tier exposure collapse, novelty starvation) to structural mitigations in
-  their implementing ADRs plus guardrail monitoring signals from v1; exploration beyond seeded
-  dithering deferred behind stated preconditions. Separate from [ADR-0008](adr/0008-ordering-stage.md) because ordering is a
-  stage, loop control spans the system
+Each decision now lives in its accepted ADR — the [ADR index](adr/README.md) is canonical.
+This section originally held the working decision shapes; they were superseded verbatim by
+ADR-0000 through ADR-0009.
 
 ---
 
@@ -256,49 +180,11 @@ Work through in this order before writing design.md:
 
 ---
 
-## 5b. Organizing Framework — 4 stages × 3 execution tiers (design.md structural spine)
+## 5b. Organizing Framework
 
-> Formalised as [ADR-0000](adr/0000-organizing-framework.md), including the translation table
-> between the assessment's topic vocabulary and the framework's stage×tier grid.
-
-Two composed frameworks, with lineage stated
-([Amatriain's 10-year blueprint retrospective](https://amatria.in/blog/RecsysArchitectures):
-Netflix 3-tier 2013 → Yan 2x2 2021 → Merlin 4-stage 2022 → Fennel 8-stage feedback-loop-centric 2022):
-
-**Axis 1 — the Merlin 4 stages**
-([source](https://medium.com/nvidia-merlin/recommender-systems-not-just-recommender-models-485c161c755e),
-validated at Instagram/Pinterest/Instacart, consistent with [surveys](https://arxiv.org/pdf/2407.21022)):
-
-1. **Retrieval** — narrowing catalog to candidates. NOTE (Amatriain): candidate selection is *optional* for
-   small catalogs — our active catalog is ~thousands of markets, not web-scale millions. Retrieval stays
-   deliberately light (heuristic blend); scoring-all-eligible is feasible. Guards [ADR-0002](adr/0002-candidate-generation.md) against over-engineering.
-2. **Filtering** — business rules the model cannot learn. **Adopt Amatriain's critique of Merlin**
-   ("overly prescriptive about when filtering occurs; conflates different logic types"): filtering is TWO-POINT,
-   not one stage — (i) *eligibility pre-filter* at itemset build time (jurisdiction, RG tier, slow-moving rules —
-   prunes before scoring spend), (ii) *validity + RG compliance gate* immediately before serving (suspended markets,
-   live RG limit trips — fast-moving, last word). Maps to [ADR-0005](adr/0005-rg-enforcement-point.md) with answer "both".
-3. **Scoring** — expensive per-candidate model, richest features. GBDT (v2+).
-4. **Ordering** — final composition ≠ score sort: diversity, calibration to user's own mix, popularity-bias
-   mitigation, placement rules. Feedback-loop mitigations live here.
-
-**Axis 2 — the Netflix 3 execution tiers** (offline / nearline / online):
-- **Offline (batch)**: scheduled, cheap, stale — training, aggregates, itemset builds
-- **Nearline (event-triggered)**: minutes-latency incremental recompute, no request-time cost — **the natural
-  home for HF sportsbook freshness**: goal scored → recompute affected itemsets within ~1 min. Fresher than
-  hourly batch, ~10x cheaper than request-time inference
-- **Online (request-time)**: tight latency budget, most expensive — reserved for what genuinely needs it (session intent)
-
-**Why the composition wins:** each of the 4 stages gets an explicit tier placement per version; freshness
-escalates in cost order (batch → nearline → online) with each escalation experiment-gated.
-
-**Stage × Version matrix (core design.md artifact):**
-
-| Stage | v1 | v2 | v3 (nearline) | v4 (online) |
-|---|---|---|---|---|
-| Retrieval | Popularity-by-segment heuristic (offline) | Same (offline) | + event-triggered candidate refresh for affected matches (nearline) | Same as v3 |
-| Filtering | Eligibility pre-filter (offline, at build) + validity/RG gate (online KV check at serve) | Same | Validity updates flow nearline → gate KV within seconds | + live session-RG signals in gate |
-| Scoring | None — popularity order (offline) | GBDT, scores stored in itemset (offline) | GBDT re-scored nearline on event triggers for affected users | GBDT re-scored at request time with session features |
-| Ordering | Static rules: diversity caps, placement rules (offline) | + calibration to user's own sport/bet-type mix (offline) | Same (recomputed nearline) | Request-time composition: session-aware ordering |
+Formalised as [ADR-0000](adr/0000-organizing-framework.md) (4 stages × 3 tiers, the
+translation table to the brief's vocabulary) — that record is canonical. The Stage × Version
+matrix lives in [design.md §2](design.md).
 
 ---
 
@@ -352,91 +238,20 @@ revisit trigger. Discernment is the deliverable.
 
 ---
 
-## 6. Mental Model — what are we actually modelling?
+## 6. Mental Model
 
-Sportsbook user behaviour decomposes into distinct layers, each with a
-cheapest-infrastructure-that-serves-it answer:
-
-| Behaviour layer | Timescale | Scope | What it covers | Why it matters | Cheapest infra that serves it | Captured in |
-|---|---|---|---|---|---|---|
-| **Stable preference** | Slow (weeks–months) | Per-user | Favourite sports, leagues, teams; bet-type affinity (singles vs accumulators); odds-band / risk appetite | The durable signal — most of personalisation value | Warehouse history + batch (no real-time infra) | v1 (segment-level), v2 (individual) |
-| **Live market state** | Fast (seconds–minutes) | User-independent | What's live now, odds movement, market availability/suspension | In-play is majority of volume in mature books; availability changes in seconds — a stale rec is not just suboptimal, it's *broken* (suspended market surfaced) | **Nearline** — market events affect many users at once, so event-triggered recompute amortises across them; no request-time inference needed | v3 |
-| **Session intent** | Fast (seconds) | Per-user, per-moment | What this user viewed seconds ago, what they just bet on | Recency of intent beats stored preference within a session | **Online (request-time)** — the only layer that genuinely requires it | v4 |
-| **Causal & sequential effects** | — | Cross-session | Incrementality (would they have bet anyway?), exploration/exploitation, cross-session dynamics, cross-placement interactions | Ceiling-raiser, but needs logged propensities + mature eval | Deferred | Post-v4 |
-
-Core modelling target: **P(engage | user, market, placement, context)**, shaped by a utility function that
-respects RG constraints (never maximise engagement for at-risk users).
-
-The market-state / session-intent split is what justifies nearline as its own version: most of the freshness
-value lands *before* paying request-time serving costs.
-
-### 6b. Catalog-side mental model — item lifespan per type (added 2026-07-14)
-
-The brief's "time-decaying catalog (matches expire; new ones appear continuously)" decomposes per item
-type. Two distinct freshness problems fall out: **item existence** (does this market exist yet/still?) and
-**attribute state** (price, suspension) — conflating them makes hourly batch look impossible; separating
-them is the design.
-
-| Item type | Example (synthetic) | Created | Dies | Lifespan | Hourly batch discovers? |
-|---|---|---|---|---|---|
-| Event (fixture) | London Reds v North Wanderers, Sat 17:30 | days–weeks ahead | full time | days–weeks | yes |
-| Pre-match market | Match Result; Over/Under 2.5; BTTS | with the event | kickoff (or rolls in-play) | days | yes |
-| In-play micro-market | "London Reds to score next?"; "Goal in next 10 mins?" | at kickoff or **mid-match** — recreated per goal cycle | minutes later | **minutes** | **no — born + dead between builds** |
-| Selection | "London Reds to win @ 2.10" | with market | with market | = market; *price* moves in seconds | identity yes / price no |
-| SGP / bet builder | "Carter to score + Over 2.5 @ 8.50" | templated over markets | shortest leg dies | days pre-match / minutes live | pre-match yes / live no |
-| Acca | "Weekend 3-fold @ 12.4" | editorial/templated | earliest leg kickoff | hours–day | yes (daily cadence natural) |
-| Boost / promo | "Reds to win — was 2.25 NOW 2.40" | trader/marketing, scheduled | campaign end | hours–day, known TTL | yes |
-
-Why hourly batch survives anyway: (i) personalisation value attaches to **stable anchors** (teams, leagues,
-market *types*, odds bands — entities living days–years); (ii) **late binding** — itemsets recommend slots
-(fixture × market-type), the concrete short-lived market ID is resolved at serve from the live catalog /
-validity KV; (iii) the ≤5s validity gate means a stale pool can never surface a dead market. What hourly
-genuinely cannot do — discover markets born mid-match — is precisely the v3 nearline justification and the
-"novelty starvation" pathology (§8).
+The behaviour-layer table (stable preference / live market state / session intent / causal
+effects, each with its cheapest-serving tier) lives in [design.md §2](design.md); the
+market-state vs session-intent split that justifies nearline is derived in
+[ADR-0001](adr/0001-offline-nearline-online-composition.md).
 
 ---
 
-## 7. Evolution Roadmap (v1 → v4, experiment-gated)
+## 7. Evolution Roadmap
 
-The delivery strategy — not a one-shot end state. Freshness escalates in cost order:
-**batch → nearline → online**, each escalation experiment-gated.
-
-### v1 — Heuristic baseline + measurement harness *(stable preference, segment-level)*
-- Offline only: popularity-by-segment candidates (sport/league affinity × recency), eligibility pre-filter at
-  build, validity/RG gate at serve, stored itemsets, lookup serving
-- Ships the logging, eval harness, and A/B framework — the *infrastructure to learn* is the point of v1
-- Gate to v2: baseline metrics stable, logging validated, guardrails wired
-
-### v2 — Learned ranking over offline candidates *(stable preference, individual-level)*
-- GBDT ranker on interaction features (bet history, odds views, bet-type/odds-band affinity; hard negatives
-  from impressions), trained offline, still batch-served; ordering adds calibration to user's own mix
-- Retrieval blend gains its only learned source: class-level EASE affinity ([ADR-0002](adr/0002-candidate-generation.md) source 5) —
-  shares training-data plumbing with the ranker, covers cross-sport/cross-market discovery
-- Gate to v3: v2 beats v1 in A/B on primary metric without guardrail regression, AND staleness shown binding
-  — two distinct staleness metrics (§6b): (a) *attribute staleness*: CTR decay vs itemset age;
-  (b) *existence miss / coverage*: share of live betting volume landing on markets born after the last
-  itemset build (hourly batch structurally cannot recommend these)
-
-### v3 — Nearline refresh *(adds live market state)*
-- Event-triggered incremental recompute: match event (goal, suspension, odds swing) → recompute itemsets for
-  affected users within ~1 min. No request-time inference; serving stays a lookup
-- Amortisation argument: one market event affects many users' itemsets — recompute once nearline, not
-  per-request online
-- Gate to v4: nearline shipped AND residual staleness (session-intent gap, not market-state gap) shown to
-  still cost engagement
-
-### v4 — Online re-ranking with session state *(adds session intent)*
-- Request-time re-rank of nearline-fresh pool using session features (viewed seconds ago, just-bet context);
-  fallback to v3 behaviour on SLO breach
-- Only the genuinely per-user-per-moment layer pays request-time cost
-
-### Later (explicitly deferred — the causal & sequential layer)
-Contextual bandits for exploration, incrementality modelling, two-tower learned candidate gen,
-per-tenant fine-tuning.
-
-Rationale: each stage answers "is the added complexity paying for itself?" with an experiment, and cost
-scales with proven value — directly addresses the assessment's "simple, well-justified choices preferred"
-instruction.
+v1→v4 with experiment gates: summarised in [design.md §2–3](design.md), tier placements in
+[ADR-0001](adr/0001-offline-nearline-online-composition.md). Kept below because it exists
+nowhere else — the per-version data-source matrix.
 
 ### Data-source matrix per version (who reads warehouse vs event stream)
 
