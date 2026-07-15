@@ -14,9 +14,11 @@ of design.md + [ADR-0000](adr/0000-organizing-framework.md) and
 
 ## Explore the design interactively
 
-- **[Design Explorer](https://nickleomartin.github.io/whizdom-ai-interview/)** — clickable
-  architecture schematic with per-module config surfaces, the v1→v4 roadmap morph, the
-  invalidation-storm demo, and a follow-one-request trace with live rule-ID suppressions
+- **[Design Explorer](https://nickleomartin.github.io/whizdom-ai-interview/)** — renders the
+  canonical design.md itself with live figures (the schematic replaces the diagram, the storm
+  demo sits beside the argument that motivates it, placement mock-ups beside the placement
+  table), plus focused views: clickable schematic with per-module config surfaces, the v1→v4
+  roadmap morph, and a follow-one-request trace with live rule-ID suppressions
 - **[Sportsbook UI simulation](https://nickleomartin.github.io/whizdom-ai-interview/prototype/)** —
   the full prototype: placements, personas, RG gating, real-time odds simulation, x-ray debug views
 

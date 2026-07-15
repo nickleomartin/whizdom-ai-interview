@@ -87,9 +87,13 @@ add libraries), synthetic data only. The RG hard-gate guardrail applies to their
 suppressed item must never render as bettable (ghost display without an odds control, x-ray or
 not).
 
-- **`explorer/`** presents the design interactively: the architecture schematic with per-module
-  drawers, the v1→v4 version morph, the invalidation-storm demo, and a follow-one-request
-  trace. All diagrams are hand-rolled SVG. Module copy obeys the edit-order rule above.
+- **`explorer/`** presents the design interactively: the Doc view renders the canonical
+  `design.md` (imported `?raw` at build time — zero copy drift) with live figures spliced at
+  stable markers (see explorer/README.md's maintenance note — restructuring design.md's §2/§3
+  markers requires checking `src/docview/DesignDoc.tsx`), plus the architecture schematic with
+  per-module drawers, the v1→v4 version morph, the invalidation-storm demo, and a
+  follow-one-request trace. All diagrams are hand-rolled SVG; the markdown renderer is
+  hand-rolled too (no new deps). Module copy obeys the edit-order rule above.
 - **`prototype/`** illustrates the design's serving behaviour (placements, real-time dynamics,
   personas, RG gating, v1/v3/v4 contrast). It is a UX exploration artifact, NOT an
   implementation of the pipeline — the brief's "no runnable pipeline" guidance refers to the ML
